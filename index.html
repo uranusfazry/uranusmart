@@ -1340,6 +1340,104 @@
 
         /* Dropdown wider for theme panel */
         .dropdown-wide { width: 360px !important; max-height: 80vh; overflow-y: auto; padding: 1rem !important; }
+
+        /* =============================================
+         * PERFORMANCE V3 — LAZY LOAD & SKELETON SYSTEM
+         * ============================================= */
+
+        /* Loading Overlay */
+        #char-loading-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            background: rgba(11, 14, 49, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        #char-loading-overlay.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .char-loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(0, 200, 224, 0.15);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: charSpinAnim 0.75s linear infinite;
+        }
+        @keyframes charSpinAnim {
+            to { transform: rotate(360deg); }
+        }
+        .char-loading-text {
+            font-family: var(--sf-pro);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gold);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            animation: charLoadPulse 1.5s ease-in-out infinite;
+        }
+        @keyframes charLoadPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        /* Skeleton Avatar */
+        .skeleton-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(
+                90deg,
+                rgba(255,255,255,0.04) 25%,
+                rgba(255,255,255,0.10) 50%,
+                rgba(255,255,255,0.04) 75%
+            );
+            background-size: 200% 100%;
+            animation: skeletonShimmer 1.4s ease-in-out infinite;
+        }
+        @keyframes skeletonShimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Background transition */
+        #bg-image {
+            transition: opacity 0.45s ease, filter 0.45s ease !important;
+        }
+        #bg-image.loading {
+            opacity: 0 !important;
+            filter: brightness(0) saturate(0) !important;
+        }
+
+        /* Profile avatar transition */
+        #profile-avatar {
+            transition: opacity 0.35s ease, transform 0.35s ease !important;
+        }
+        #profile-avatar.loading {
+            opacity: 0 !important;
+            transform: scale(0.92) !important;
+        }
+
+        /* Portal grid fade during char switch */
+        #portals-grid.char-switching {
+            opacity: 0.35;
+            filter: blur(2px);
+            pointer-events: none;
+            transition: opacity 0.3s ease, filter 0.3s ease !important;
+        }
+        #portals-grid {
+            transition: opacity 0.3s ease, filter 0.3s ease !important;
+        }
     </style>
 </head>
 <body>
@@ -1354,6 +1452,12 @@
     <canvas id="particle-canvas"></canvas>
 
     <div id="notif-container" class="notif-container"></div>
+
+    <!-- Character Loading Overlay -->
+    <div id="char-loading-overlay">
+        <div class="char-loading-spinner"></div>
+        <div class="char-loading-text" id="char-loading-text">Memuat Karakter...</div>
+    </div>
 
     <!-- Navbar -->
     <nav class="navbar fixed content-layer">
@@ -2033,54 +2137,6 @@
     }
 
     // ============================================================
-    // CHARACTER SELECTION (applies Theme + Background + Identity + Effect)
-    // ============================================================
-    window.selectCharacter = function(charId) {
-        const c = CHARACTERS.find(x => x.id === charId);
-        if (!c) return;
-        
-        customizationSettings.character = charId;
-        
-        // Buat memory default jika belum ada
-        if (!customizationSettings.characterProfiles) {
-            customizationSettings.characterProfiles = {};
-        }
-        
-        let profile = customizationSettings.characterProfiles[charId];
-        // Jika karakter belum pernah dicustom, panggil settingan bawaannya
-        if (!profile) {
-            profile = {
-                theme: c.theme,
-                font: "sf-pro", // Default font
-                visualEffect: c.visualEffect,
-                background: c.background
-            };
-            customizationSettings.characterProfiles[charId] = profile;
-        }
-
-        // Terapkan pengaturan profil karakter ke pengaturan global
-        customizationSettings.theme = profile.theme;
-        customizationSettings.font = profile.font || "sf-pro";
-        customizationSettings.visualEffect = profile.visualEffect;
-        customizationSettings.background = profile.background;
-        
-        // Identitas nama web & subtitle selalu mengikuti bawaan karakter
-        customizationSettings.websiteName = c.websiteName;
-        customizationSettings.themeTitle = c.themeTitle;
-        
-        saveCustomization();
-
-        applyTheme(customizationSettings.theme);
-        applyFont(customizationSettings.font);
-        applyBackground(customizationSettings.background);
-        applyVisualEffect(customizationSettings.visualEffect);
-        applyIdentity(customizationSettings.websiteName, customizationSettings.themeTitle);
-        refreshAllForgeUI();
-
-        window.showNotification('Karakter Diperbarui', `${c.name} diterapkan`, 'success');
-    };
-
-    // ============================================================
     // APPLICATION LOGIC
     // ============================================================
     document.addEventListener('DOMContentLoaded', function() {
@@ -2326,16 +2382,6 @@
 
         window.applyVisualEffect = function(effectId) {
             document.body.setAttribute('data-effect', effectId);
-        };
-
-        window.applyBackground = function(bgId) {
-            customizationSettings.background = bgId;
-            const bgObj = BACKGROUNDS.find(b => b.id === bgId) || BACKGROUNDS[0];
-            
-            document.getElementById('bg-portrait').srcset = bgObj.imgP;
-            document.getElementById('bg-landscape').srcset = bgObj.imgL;
-            document.getElementById('bg-image').src = bgObj.img;
-            document.getElementById('profile-avatar').src = bgObj.avatar;
         };
 
         window.applyIdentity = function(wName, tTitle) {
@@ -2783,6 +2829,275 @@
         // Boot
         initPortalApp();
     });
+
+    // ============================================================
+    // PERFORMANCE V3 — LAZY LOAD CHARACTER ASSET SYSTEM
+    // ============================================================
+
+    const characterAssetCache = new Map();
+    let idlePreloadTimer = null;
+    let isCharacterSwitching = false;
+
+    /**
+     * Preload satu image, kembalikan Promise<string> (objectURL atau src asli)
+     * Jika sudah di cache, langsung resolve.
+     */
+    function preloadImage(src) {
+        if (!src) return Promise.resolve('');
+        if (characterAssetCache.has(src)) {
+            return Promise.resolve(characterAssetCache.get(src));
+        }
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                characterAssetCache.set(src, src);
+                resolve(src);
+            };
+            img.onerror = () => {
+                // fallback: tetap gunakan src asli meski gagal
+                characterAssetCache.set(src, src);
+                resolve(src);
+            };
+            img.src = src;
+        });
+    }
+
+    /**
+     * Preload semua asset satu karakter (avatar + portrait + landscape + bg)
+     */
+    function preloadCharacterAssets(charId) {
+        const char = CHARACTERS.find(c => c.id === charId);
+        if (!char) return Promise.resolve();
+        const bg = BACKGROUNDS.find(b => b.id === char.background) || BACKGROUNDS[0];
+        return Promise.all([
+            preloadImage(char.avatar),
+            preloadImage(bg.imgP),
+            preloadImage(bg.imgL),
+            preloadImage(bg.img)
+        ]);
+    }
+
+    /**
+     * Tampilkan overlay loading karakter
+     */
+    function showCharLoadingOverlay(text) {
+        const overlay = document.getElementById('char-loading-overlay');
+        const label = document.getElementById('char-loading-text');
+        if (label) label.textContent = text || 'Memuat Karakter...';
+        if (overlay) overlay.classList.add('visible');
+    }
+
+    /**
+     * Sembunyikan overlay loading karakter
+     */
+    function hideCharLoadingOverlay() {
+        const overlay = document.getElementById('char-loading-overlay');
+        if (overlay) overlay.classList.remove('visible');
+    }
+
+    /**
+     * Tampilkan skeleton di avatar saat loading
+     */
+    function showAvatarSkeleton() {
+        const avatar = document.getElementById('profile-avatar');
+        const profile = avatar ? avatar.closest('.profile') : null;
+        if (!profile) return;
+        let skEl = profile.querySelector('.skeleton-avatar');
+        if (!skEl) {
+            skEl = document.createElement('div');
+            skEl.className = 'skeleton-avatar';
+            skEl.style.cssText = 'position:absolute;inset:0;z-index:2;';
+            profile.style.position = 'relative';
+            profile.appendChild(skEl);
+        }
+        skEl.style.display = 'block';
+    }
+
+    /**
+     * Hapus skeleton avatar
+     */
+    function hideAvatarSkeleton() {
+        const avatar = document.getElementById('profile-avatar');
+        const profile = avatar ? avatar.closest('.profile') : null;
+        if (!profile) return;
+        const skEl = profile.querySelector('.skeleton-avatar');
+        if (skEl) skEl.style.display = 'none';
+    }
+
+    /**
+     * Apply background HANYA dari cache — non-blocking, dengan transisi smooth
+     */
+    window.applyBackground = function(bgId) {
+        customizationSettings.background = bgId;
+        const bgObj = BACKGROUNDS.find(b => b.id === bgId) || BACKGROUNDS[0];
+
+        const bgImg = document.getElementById('bg-image');
+        const portrait = document.getElementById('bg-portrait');
+        const landscape = document.getElementById('bg-landscape');
+        const avatar = document.getElementById('profile-avatar');
+
+        // Fade out bg
+        if (bgImg) bgImg.classList.add('loading');
+        if (avatar) avatar.classList.add('loading');
+        showAvatarSkeleton();
+
+        // Semua asset sudah di-preload sebelum ini dipanggil (via loadCharacter)
+        // Jadi set src langsung — browser tidak perlu re-download
+        setTimeout(() => {
+            if (portrait) portrait.srcset = bgObj.imgP;
+            if (landscape) landscape.srcset = bgObj.imgL;
+            if (bgImg) {
+                bgImg.src = bgObj.img;
+                bgImg.onload = () => bgImg.classList.remove('loading');
+                bgImg.onerror = () => bgImg.classList.remove('loading');
+            }
+            if (avatar) {
+                // Gunakan avatar dari char jika ada
+                const ch = CHARACTERS.find(c => BACKGROUNDS.find(b => b.id === bgId && b.id === c.background));
+                avatar.src = bgObj.avatar || (ch ? ch.avatar : '');
+                
+                avatar.onload = () => {
+                    avatar.classList.remove('loading');
+                    hideAvatarSkeleton();
+                };
+                avatar.onerror = () => {
+                    avatar.classList.remove('loading');
+                    hideAvatarSkeleton();
+                };
+            }
+        }, 80);
+    };
+
+    /**
+     * LAZY LOAD CHARACTER — main function
+     * Dipanggil saat user ganti karakter
+     */
+    async function loadCharacter(charId) {
+        if (isCharacterSwitching) return;
+        isCharacterSwitching = true;
+
+        const char = CHARACTERS.find(c => c.id === charId);
+        if (!char) { isCharacterSwitching = false; return; }
+
+        const allCached = characterAssetCache.has(char.avatar);
+        const bg = BACKGROUNDS.find(b => b.id === char.background) || BACKGROUNDS[0];
+        const bgCached = characterAssetCache.has(bg.img);
+
+        // Tampilkan loading hanya jika belum di cache
+        if (!allCached || !bgCached) {
+            showCharLoadingOverlay(`Mengambil Asset ${char.name}...`);
+        }
+
+        // Blur portal grid selama transisi
+        const grid = document.getElementById('portals-grid');
+        if (grid) grid.classList.add('char-switching');
+
+        try {
+            // Preload asset karakter ini dulu
+            await preloadCharacterAssets(charId);
+        } catch (e) {
+            // Tetap lanjut meski gagal
+        }
+
+        // Semua asset siap — apply dengan smooth transition
+        hideCharLoadingOverlay();
+
+        // Terapkan semua pengaturan
+        applyTheme(customizationSettings.theme);
+        applyFont(customizationSettings.font);
+        window.applyBackground(char.background);
+        applyVisualEffect(customizationSettings.visualEffect);
+        applyIdentity(customizationSettings.websiteName, customizationSettings.themeTitle);
+
+        // Hapus blur grid setelah transisi
+        setTimeout(() => {
+            if (grid) grid.classList.remove('char-switching');
+            isCharacterSwitching = false;
+        }, 400);
+
+        // Jadwalkan idle preload karakter lain
+        scheduleIdlePreload(charId);
+    }
+
+    /**
+     * Idle preload — setelah 3 detik idle, preload karakter berikutnya
+     */
+    function scheduleIdlePreload(currentCharId) {
+        if (idlePreloadTimer) clearTimeout(idlePreloadTimer);
+        idlePreloadTimer = setTimeout(() => {
+            const others = CHARACTERS.filter(c => c.id !== currentCharId);
+            // Preload satu per satu agar tidak membebani
+            others.reduce((promise, char) => {
+                return promise.then(() => {
+                    return new Promise(resolve => {
+                        // Gunakan requestIdleCallback jika tersedia
+                        if ('requestIdleCallback' in window) {
+                            requestIdleCallback(() => {
+                                preloadCharacterAssets(char.id).then(resolve);
+                            }, { timeout: 2000 });
+                        } else {
+                            setTimeout(() => {
+                                preloadCharacterAssets(char.id).then(resolve);
+                            }, 800);
+                        }
+                    });
+                });
+            }, Promise.resolve());
+        }, 3000);
+    }
+
+    /**
+     * Override selectCharacter agar pakai lazy load system
+     */
+    window.selectCharacter = function(charId) {
+        const c = CHARACTERS.find(x => x.id === charId);
+        if (!c) return;
+
+        customizationSettings.character = charId;
+
+        if (!customizationSettings.characterProfiles) {
+            customizationSettings.characterProfiles = {};
+        }
+
+        let profile = customizationSettings.characterProfiles[charId];
+        if (!profile) {
+            profile = {
+                theme: c.theme,
+                font: 'sf-pro',
+                visualEffect: c.visualEffect,
+                background: c.background
+            };
+            customizationSettings.characterProfiles[charId] = profile;
+        }
+
+        customizationSettings.theme = profile.theme;
+        customizationSettings.font = profile.font || 'sf-pro';
+        customizationSettings.visualEffect = profile.visualEffect;
+        customizationSettings.background = profile.background;
+        customizationSettings.websiteName = c.websiteName;
+        customizationSettings.themeTitle = c.themeTitle;
+
+        saveCustomization();
+        refreshAllForgeUI();
+
+        // Pakai lazy load — bukan direct apply
+        loadCharacter(charId).then(() => {
+            window.showNotification('Karakter Diperbarui', `${c.name} siap`, 'success');
+        });
+    };
+
+    /**
+     * Startup preload HANYA karakter aktif agar tidak blocking
+     */
+    document.addEventListener('DOMContentLoaded', function() {
+        const startChar = customizationSettings.character || 'sasuke';
+        // Mulai preload di background tanpa blocking render engine
+        preloadCharacterAssets(startChar).then(() => {
+            // Setelah karakter aktif siap, jadwalkan idle preload sisanya
+            scheduleIdlePreload(startChar);
+        });
+    }, { once: true });
     </script>
 
     <script>
