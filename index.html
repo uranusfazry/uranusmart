@@ -1360,8 +1360,8 @@
         <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 1rem;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div id="logo-container" style="display: flex; align-items: center; cursor: pointer; user-select: none;">
-                    <img src="https://files.catbox.moe/oyk6sx.png" alt="Logo" class="logo-pulse" style="height: 50px; width: auto; border-radius: 50%;" draggable="false" crossorigin="anonymous">
-                    <span id="nav-website-name" style="font-weight: 700; font-size: 1.2rem; letter-spacing: -0.025em; margin-left: 0.25rem; color: var(--gold); text-transform: uppercase;">SUYOU</span>
+                    <img src="https://files.catbox.moe/8ulhiv.webp" alt="Logo" class="logo-pulse" style="height: 50px; width: auto; border-radius: 50%;" draggable="false" crossorigin="anonymous">
+                    <span id="nav-website-name" style="font-weight: 700; font-size: 1.2rem; letter-spacing: -0.025em; margin-left: 0.25rem; color: var(--gold); text-transform: uppercase;">MLBB SUYOU</span>
                 </div>
 
                 <!-- Desktop Nav -->
@@ -1678,7 +1678,7 @@
         {
             id: "sasuke",
             name: "Sasuke Uchiha",
-            websiteName: "SUYOU",
+            websiteName: "MLBB SUYOU",
             themeTitle: "Sasuke Uchiha",
             theme: "midnight-executive",
             background: "sasuke",
@@ -1688,7 +1688,7 @@
         {
             id: "fanny",
             name: "Fanny Galactic Starhawk",
-            websiteName: "FANNY",
+            websiteName: "MLBB FANNY",
             themeTitle: "Galactic Starhawk",
             theme: "galactic",
             background: "default",
@@ -1702,7 +1702,7 @@
         theme: "midnight-executive",
         font: "sf-pro",
         background: "sasuke",
-        websiteName: "SUYOU",
+        websiteName: "MLBB SUYOU",
         themeTitle: "Sasuke Uchiha",
         visualEffect: "glass",
         character: "sasuke",
@@ -2196,13 +2196,13 @@
                        (data.theme || "midnight-executive") + SEP_SETTINGS + 
                        (data.font || "sf-pro") + SEP_SETTINGS + 
                        (data.background || "sasuke") + SEP_SETTINGS + 
-                       (data.websiteName || "SUYOU") + SEP_SETTINGS + 
+                       (data.websiteName || "MLBB SUYOU") + SEP_SETTINGS + 
                        (data.themeTitle || "Sasuke Uchiha") + SEP_SETTINGS + 
                        (data.visualEffect || "glass") + SEP_SETTINGS +
                        (data.character || "sasuke");
             },
             deserialize(str) {
-                if (!str) return { portals:[], theme:"midnight-executive", font:"sf-pro", background:"sasuke", websiteName:"SUYOU", themeTitle:"Sasuke Uchiha", visualEffect:"glass", character:"sasuke" };
+                if (!str) return { portals:[], theme:"midnight-executive", font:"sf-pro", background:"sasuke", websiteName:"MLBB SUYOU", themeTitle:"Sasuke Uchiha", visualEffect:"glass", character:"sasuke" };
                 const parts = str.split(SEP_SETTINGS);
                 const ps = parts[0] ? parts[0].split(SEP_ITEM).map(s => {
                     const f = s.split(SEP_FIELD);
@@ -2213,33 +2213,11 @@
                     theme: parts[1] || "midnight-executive", 
                     font: parts[2] || "sf-pro",
                     background: parts[3] || "sasuke",
-                    websiteName: parts[4] || "SUYOU",
+                    websiteName: parts[4] || "MLBB SUYOU",
                     themeTitle: parts[5] || "Sasuke Uchiha",
                     visualEffect: parts[6] || "glass",
                     character: parts[7] || "sasuke"
                 };
-            },
-            encode(data) {
-                try {
-                    let raw = UrlManager.tokenize(UrlManager.serialize(data));
-                    return LZString.compressToBase64(raw).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-                } catch(e) { return null; }
-            },
-            decode(encoded) {
-                try {
-                    let b64 = encoded.replace(/-/g,"+").replace(/_/g,"/");
-                    while (b64.length % 4 !== 0) b64 += "=";
-                    let raw = LZString.decompressFromBase64(b64);
-                    if (!raw) return null;
-                    return UrlManager.deserialize(UrlManager.detokenize(raw));
-                } catch(e) { return null; }
-            },
-            load(payload) {
-                if (payload.startsWith("v5_")) return UrlManager.decode(payload.slice(3));
-                if (payload.startsWith("v4:") || payload.startsWith("id:")) { window.showNotification('Peringatan','Tautan versi lama','warning'); return null; }
-                const legacy = LZString.decompressFromEncodedURIComponent(payload);
-                if (legacy && legacy.startsWith("[")) return { portals: JSON.parse(legacy), theme:"midnight-executive" };
-                return null;
             }
         };
 
@@ -2264,7 +2242,7 @@
                     customizationSettings.theme = decoded.theme || "midnight-executive";
                     customizationSettings.font = decoded.font || "sf-pro";
                     customizationSettings.background = decoded.background || "sasuke";
-                    customizationSettings.websiteName = decoded.websiteName || "SUYOU";
+                    customizationSettings.websiteName = decoded.websiteName || "MLBB SUYOU";
                     customizationSettings.themeTitle = decoded.themeTitle || "Sasuke Uchiha";
                     customizationSettings.visualEffect = decoded.visualEffect || "glass";
                     customizationSettings.character = decoded.character || "sasuke";
@@ -2760,7 +2738,7 @@
                             customizationSettings.theme = imported.theme || "midnight-executive";
                             customizationSettings.font = imported.font || "sf-pro";
                             customizationSettings.background = imported.background || "sasuke";
-                            customizationSettings.websiteName = imported.websiteName || "SUYOU";
+                            customizationSettings.websiteName = imported.websiteName || "MLBB SUYOU";
                             customizationSettings.themeTitle = imported.themeTitle || "Sasuke Uchiha";
                             customizationSettings.visualEffect = imported.visualEffect || "glass";
                             customizationSettings.character = imported.character || "sasuke";
