@@ -1624,7 +1624,7 @@
     
     // Theme Presets (kept for compatibility / smart link payloads)
     const THEMES = [
-        { id: "galactic", name: "Galactic Starhawk" },
+        { id: "galactic", name: "Default" },
         { id: "white-titanium", name: "Putih Premium" },
         { id: "midnight-executive", name: "Hitam Profesional" },
         { id: "royal-amethyst", name: "Ungu Kerajaan" },
@@ -1680,9 +1680,9 @@
             name: "Sasuke Uchiha",
             websiteName: "MLBB SUYOU",
             themeTitle: "Sasuke Uchiha",
-            theme: "midnight-executive",
+            theme: "galactic",
             background: "sasuke",
-            visualEffect: "glass",
+            visualEffect: "silver-executive",
             avatar: "https://files.catbox.moe/5s7ujq.webp"
         },
         {
@@ -1699,12 +1699,12 @@
 
     // Centralized Customization State
     let customizationSettings = {
-        theme: "midnight-executive",
+        theme: "galactic",
         font: "sf-pro",
         background: "sasuke",
         websiteName: "MLBB SUYOU",
         themeTitle: "Sasuke Uchiha",
-        visualEffect: "glass",
+        visualEffect: "silver-executive",
         character: "sasuke",
         characterProfiles: {} // NEW: To store per-character settings
     };
@@ -1962,7 +1962,7 @@
 
     function getThemeName(themeId) {
         const t = THEMES.find(x => x.id === themeId);
-        return t ? t.name : "Galactic Starhawk";
+        return t ? t.name : "Default";
     }
 
     function getEffectName(effectId) {
@@ -2193,16 +2193,16 @@
             serialize(data) {
                 const ps = data.portals.map(p => [p.name,p.url,p.icon,p.color,p.description||"",p.password||""].join(SEP_FIELD)).join(SEP_ITEM);
                 return ps + SEP_SETTINGS + 
-                       (data.theme || "midnight-executive") + SEP_SETTINGS + 
+                       (data.theme || "galactic") + SEP_SETTINGS + 
                        (data.font || "sf-pro") + SEP_SETTINGS + 
                        (data.background || "sasuke") + SEP_SETTINGS + 
                        (data.websiteName || "MLBB SUYOU") + SEP_SETTINGS + 
                        (data.themeTitle || "Sasuke Uchiha") + SEP_SETTINGS + 
-                       (data.visualEffect || "glass") + SEP_SETTINGS +
+                       (data.visualEffect || "silver-executive") + SEP_SETTINGS +
                        (data.character || "sasuke");
             },
             deserialize(str) {
-                if (!str) return { portals:[], theme:"midnight-executive", font:"sf-pro", background:"sasuke", websiteName:"MLBB SUYOU", themeTitle:"Sasuke Uchiha", visualEffect:"glass", character:"sasuke" };
+                if (!str) return { portals:[], theme:"galactic", font:"sf-pro", background:"sasuke", websiteName:"MLBB SUYOU", themeTitle:"Sasuke Uchiha", visualEffect:"silver-executive", character:"sasuke" };
                 const parts = str.split(SEP_SETTINGS);
                 const ps = parts[0] ? parts[0].split(SEP_ITEM).map(s => {
                     const f = s.split(SEP_FIELD);
@@ -2210,12 +2210,12 @@
                 }) : [];
                 return { 
                     portals: ps, 
-                    theme: parts[1] || "midnight-executive", 
+                    theme: parts[1] || "galactic", 
                     font: parts[2] || "sf-pro",
                     background: parts[3] || "sasuke",
                     websiteName: parts[4] || "MLBB SUYOU",
                     themeTitle: parts[5] || "Sasuke Uchiha",
-                    visualEffect: parts[6] || "glass",
+                    visualEffect: parts[6] || "silver-executive",
                     character: parts[7] || "sasuke"
                 };
             }
@@ -2239,12 +2239,12 @@
                 const decoded = UrlManager.load(encodedData);
                 if (decoded && decoded.portals) {
                     portals = decoded.portals;
-                    customizationSettings.theme = decoded.theme || "midnight-executive";
+                    customizationSettings.theme = decoded.theme || "galactic";
                     customizationSettings.font = decoded.font || "sf-pro";
                     customizationSettings.background = decoded.background || "sasuke";
                     customizationSettings.websiteName = decoded.websiteName || "MLBB SUYOU";
                     customizationSettings.themeTitle = decoded.themeTitle || "Sasuke Uchiha";
-                    customizationSettings.visualEffect = decoded.visualEffect || "glass";
+                    customizationSettings.visualEffect = decoded.visualEffect || "silver-executive";
                     customizationSettings.character = decoded.character || "sasuke";
 
                     localStorage.setItem('portals', JSON.stringify(portals));
@@ -2735,12 +2735,12 @@
                     if (imported) {
                         if (Array.isArray(imported.portals)) {
                             localStorage.setItem('portals', JSON.stringify(imported.portals));
-                            customizationSettings.theme = imported.theme || "midnight-executive";
+                            customizationSettings.theme = imported.theme || "galactic";
                             customizationSettings.font = imported.font || "sf-pro";
                             customizationSettings.background = imported.background || "sasuke";
                             customizationSettings.websiteName = imported.websiteName || "MLBB SUYOU";
                             customizationSettings.themeTitle = imported.themeTitle || "Sasuke Uchiha";
-                            customizationSettings.visualEffect = imported.visualEffect || "glass";
+                            customizationSettings.visualEffect = imported.visualEffect || "silver-executive";
                             customizationSettings.character = imported.character || "sasuke";
                             customizationSettings.characterProfiles = imported.characterProfiles || {}; // Retain profiles memori karakter
                             saveCustomization();
