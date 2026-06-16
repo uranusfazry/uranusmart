@@ -3174,13 +3174,9 @@
                     avatar.src = val; 
                 } else {
                     // Fallback ke avatar bawaan karakter jika input dikosongkan
-                    if (customizationSettings.character === 'custom' && customizationSettings.customCharacter) {
-                        avatar.src = customizationSettings.customCharacter.avatar;
-                    } else {
-                        const charId = customizationSettings.character || 'sasuke';
-                        const ch = CHARACTERS.find(c => c.id === charId);
-                        if (ch) avatar.src = ch.avatar;
-                    }
+                    const charId = customizationSettings.character || 'sasuke';
+                    const ch = CHARACTERS.find(c => c.id === charId);
+                    if (ch) avatar.src = ch.avatar;
                 }
             });
         }
@@ -3783,26 +3779,22 @@
                 bgImg.onerror = () => bgImg.classList.remove('loading');
             }
 
-            console.log("Portrait:", portraitSrc);
-            console.log("Landscape:", landscapeSrc);
-            console.log("Current Device:", window.innerWidth <= 768 ? "Mobile" : "Desktop");
-            // PATCH END
-            
             if (avatar) {
                 // PRIORITAS: 1. Foto Customisasi (jika ada), 2. Avatar Karakter, 3. Avatar Background
                 const ch = CHARACTERS.find(c => BACKGROUNDS.find(b => b.id === bgId && b.id === c.background));
                 
-                // PATCH START: Inject Portrait Image priority over heroImage & defaults
-                let chosenAvatar = customizationSettings.portraitImage || customizationSettings.heroImage || bgObj.avatar || (ch ? ch.avatar : '');
-                
-                // Cegah assignment empty string jika override kosong
-                if ((customizationSettings.portraitImage && customizationSettings.portraitImage.trim() === "") || 
-                    (!customizationSettings.portraitImage && customizationSettings.heroImage && customizationSettings.heroImage.trim() === "")) {
-                    chosenAvatar = bgObj.avatar || (ch ? ch.avatar : '');
-                }
-                // PATCH END
+                // PATCH START: PISAHKAN AVATAR DARI PORTRAIT / LANDSCAPE
+                let chosenAvatar = customizationSettings.heroImage?.trim() 
+                    ? customizationSettings.heroImage 
+                    : (ch ? ch.avatar : bgObj.avatar);
 
                 avatar.src = chosenAvatar;
+                
+                // DEBUG LOG: Cek Independensi
+                console.log("Avatar:", chosenAvatar);
+                console.log("Portrait:", portraitSrc);
+                console.log("Landscape:", landscapeSrc);
+                // PATCH END
                 
                 avatar.onload = () => {
                     avatar.classList.remove('loading');
