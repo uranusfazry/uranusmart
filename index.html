@@ -3263,41 +3263,95 @@
         }
 
         function renderCustomQR(targetCanvas, textData, isHighQuality) {
-            const size = isHighQuality ? 3000 : 600;
-            const padding = size * 0.05;
-            const cardWidth = size - (padding * 2);
-            const textSpace = size * 0.15;
-            const cardHeight = cardWidth + textSpace;
-            targetCanvas.width = size;
-            targetCanvas.height = size + (textSpace * 0.5);
-            const ctx = targetCanvas.getContext('2d');
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = "rgba(0,0,0,0.2)"; ctx.shadowBlur = size * 0.03; ctx.shadowOffsetY = size * 0.01;
-            ctx.beginPath(); ctx.roundRect(padding, padding, cardWidth, cardHeight, size * 0.05); ctx.fill();
-            ctx.shadowColor = "transparent";
-            const tempQr = document.createElement('canvas');
-            const qrMargin = cardWidth * 0.1;
-            const qrSize = cardWidth - (qrMargin * 2);
-            new QRious({ element: tempQr, value: textData, size: qrSize, level:'H', backgroundAlpha:0, foreground:'#000000' });
-            ctx.drawImage(tempQr, padding + qrMargin, padding + qrMargin);
-            const img = new Image(); img.crossOrigin = "Anonymous";
-            img.onload = function() {
-                const logoSize = qrSize * 0.18;
-                const cx = padding + qrMargin + (qrSize / 2), cy = padding + qrMargin + (qrSize / 2);
-                ctx.beginPath(); ctx.arc(cx, cy, logoSize / 2, 0, 2 * Math.PI); ctx.fillStyle = '#ffffff'; ctx.fill();
-                ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, logoSize/2, 0, 2 * Math.PI); ctx.clip();
-                ctx.filter = 'grayscale(100%)'; ctx.drawImage(img, cx - logoSize/2, cy - logoSize/2, logoSize, logoSize);
-                ctx.restore();
-                drawBottomText(ctx, size, padding + cardWidth, textSpace);
-                if (isHighQuality) {
-                    try {
-                        const a = document.createElement('a'); a.download = 'MLBB_Portal_QR.png'; a.href = targetCanvas.toDataURL('image/png'); a.click();
-                        window.showNotification('Berhasil','Unduhan dimulai','success');
-                    } catch(e) { window.showNotification('Kesalahan','Gagal menyimpan gambar','error'); }
+            return new Promise((resolve, reject) => {
+                try {
+                    // FIX: Resolusi 4096 untuk 4K
+                    const size = isHighQuality ? 4096 : 600; 
+                    const padding = size * 0.05;
+                    const cardWidth = size - (padding * 2);
+                    const textSpace = size * 0.15;
+                    const cardHeight = cardWidth + textSpace;
+                    
+                    targetCanvas.width = size;
+                    targetCanvas.height = size + (textSpace * 0.5);
+                    const ctx = targetCanvas.getContext('2d');
+                    
+                    // Background Putih
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowColor = "rgba(0,0,0,0.2)"; 
+                    ctx.shadowBlur = size * 0.03; 
+                    ctx.shadowOffsetY = size * 0.01;
+                    ctx.beginPath(); 
+                    ctx.roundRect(padding, padding, cardWidth, cardHeight, size * 0.05); 
+                    ctx.fill();
+                    ctx.shadowColor = "transparent";
+                    
+                    // Generate QR
+                    const tempQr = document.createElement('canvas');
+                    const qrMargin = cardWidth * 0.1;
+                    const qrSize = cardWidth - (qrMargin * 2);
+                    new QRious({ 
+                        element: tempQr, 
+                        value: textData, 
+                        size: qrSize, 
+                        level:'H', 
+                        backgroundAlpha:0, 
+                        foreground:'#000000' 
+                    });
+                    ctx.drawImage(tempQr, padding + qrMargin, padding + qrMargin);
+                    
+                    // Load Avatar Logo
+                    const img = new Image(); 
+                    img.crossOrigin = "anonymous"; // FIX: CORS Policy
+
+                    const drawTextAndResolve = () => {
+                        drawBottomText(ctx, size, padding + cardWidth, textSpace);
+                        resolve(); // Selesaikan promise
+                    };
+
+                    img.onload = function() {
+                        try {
+                            const logoSize = qrSize * 0.18;
+                            const cx = padding + qrMargin + (qrSize / 2);
+                            const cy = padding + qrMargin + (qrSize / 2);
+                            
+                            // Frame Lingkaran Putih di Belakang Logo
+                            ctx.beginPath(); 
+                            ctx.arc(cx, cy, (logoSize / 2) + (size * 0.01), 0, 2 * Math.PI); 
+                            ctx.fillStyle = '#ffffff'; 
+                            ctx.fill();
+                            
+                            // Kliping dan Render Logo Avatar
+                            ctx.save(); 
+                            ctx.beginPath(); 
+                            ctx.arc(cx, cy, logoSize/2, 0, 2 * Math.PI); 
+                            ctx.clip();
+                            ctx.drawImage(img, cx - logoSize/2, cy - logoSize/2, logoSize, logoSize);
+                            ctx.restore();
+                            
+                            drawTextAndResolve();
+                        } catch(e) {
+                            console.error("Kesalahan saat menggambar logo QR:", e);
+                            drawTextAndResolve(); // Tetap render meski logo gagal
+                        }
+                    };
+                    
+                    img.onerror = function() { 
+                        console.warn("Gagal memuat logo untuk QR Code, merender tanpa logo.");
+                        drawTextAndResolve(); 
+                    };
+                    
+                    // FIX: Bypass CORS Cache Aggressive
+                    const avatarSrc = document.getElementById('profile-avatar').src;
+                    if(avatarSrc.startsWith('http')) {
+                        img.src = avatarSrc + (avatarSrc.includes('?') ? '&' : '?') + 'cb=' + new Date().getTime();
+                    } else {
+                        img.src = avatarSrc; // Untuk Base64/Data URI
+                    }
+                } catch (err) {
+                    reject(err);
                 }
-            };
-            img.onerror = function() { drawBottomText(ctx, size, padding + cardWidth, textSpace); };
-            img.src = document.getElementById('profile-avatar').src;
+            });
         }
 
         function drawBottomText(ctx, canvasWidth, textStartY, textSpaceHeight) {
@@ -3306,10 +3360,44 @@
             ctx.fillText(`SCAN UNTUK MASUK KE PORTAL ${customizationSettings.websiteName.toUpperCase()}`, canvasWidth / 2, textStartY + (textSpaceHeight * 0.4));
         }
 
-        window.downloadHighResQR = function() {
-            if (!currentGeneratedUrl) { window.showNotification('Kesalahan','Smart Link belum dibuat','error'); return; }
-            window.showNotification('Info','Memproses QR Code resolusi tinggi','info');
-            renderCustomQR(document.createElement('canvas'), currentGeneratedUrl, true);
+        window.downloadHighResQR = async function() {
+            if (!currentGeneratedUrl) { 
+                window.showNotification('Kesalahan','Smart Link belum dibuat','error'); 
+                return; 
+            }
+            
+            const btn = document.querySelector('.btn-download-4k');
+            const originalHtml = btn.innerHTML;
+            
+            // Set state menjadi loading
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Membuat QR 4K...';
+            btn.classList.add('btn-disabled');
+
+            try {
+                const canvas4K = document.createElement('canvas');
+                
+                // Tunggu proses render QR hingga selesai secara sinkronus (await)
+                await renderCustomQR(canvas4K, currentGeneratedUrl, true);
+                
+                // Ekstrak data dan buat elemen anchor download
+                const link = document.createElement("a");
+                link.href = canvas4K.toDataURL("image/png");
+                link.download = "qr-code-4k.png";
+                
+                // Pasang sementara ke document.body agar berfungsi di Firefox/Mobile
+                document.body.appendChild(link); 
+                link.click();
+                document.body.removeChild(link);
+
+                window.showNotification('Berhasil', 'QR 4K berhasil diunduh', 'success');
+            } catch (error) {
+                console.error("Kesalahan Unduh QR 4K:", error);
+                window.showNotification('Kesalahan', 'Gagal membuat QR 4K', 'error');
+            } finally {
+                // Kembalikan kondisi tombol
+                btn.innerHTML = originalHtml;
+                btn.classList.remove('btn-disabled');
+            }
         };
 
         window.copySmartLink = function() {
