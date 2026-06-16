@@ -3431,6 +3431,12 @@
         const landscape = document.getElementById('bg-landscape');
         const avatar = document.getElementById('profile-avatar');
 
+        // PATCH START: DEBUG SYSTEM
+        console.group("BACKGROUND SYSTEM");
+        console.log("Theme Background:", bgId);
+        console.log("Landscape Image:", customizationSettings.landscapeImage);
+        // PATCH END
+
         // Fade out bg
         if (bgImg) bgImg.classList.add('loading');
         if (avatar) avatar.classList.add('loading');
@@ -3439,17 +3445,24 @@
         // Semua asset sudah di-preload sebelum ini dipanggil (via loadCharacter)
         // Jadi set src langsung — browser tidak perlu re-download
         setTimeout(() => {
-            if (portrait) portrait.srcset = bgObj.imgP;
-            if (landscape) landscape.srcset = bgObj.imgL;
+            // PATCH START: Prioritas Background (Fix <picture> tag override)
+            const isCustomLandscape = customizationSettings.landscapeImage && customizationSettings.landscapeImage.trim() !== "";
+            const finalBg = isCustomLandscape ? customizationSettings.landscapeImage : bgObj.img;
+            
+            console.log("Final Background:", finalBg);
+            console.groupEnd(); // End Debug
+
+            // WAJIB timpa srcset pada <source> agar tidak membandel
+            if (portrait) portrait.srcset = isCustomLandscape ? finalBg : bgObj.imgP;
+            if (landscape) landscape.srcset = isCustomLandscape ? finalBg : bgObj.imgL;
+            
             if (bgImg) {
-                // PATCH START: Override Background with Landscape Image
-                bgImg.src = customizationSettings.landscapeImage && customizationSettings.landscapeImage.trim() !== "" 
-                            ? customizationSettings.landscapeImage 
-                            : bgObj.img;
-                // PATCH END
+                bgImg.src = finalBg;
                 bgImg.onload = () => bgImg.classList.remove('loading');
                 bgImg.onerror = () => bgImg.classList.remove('loading');
             }
+            // PATCH END
+            
             if (avatar) {
                 // PRIORITAS: 1. Foto Customisasi (jika ada), 2. Avatar Karakter, 3. Avatar Background
                 const ch = CHARACTERS.find(c => BACKGROUNDS.find(b => b.id === bgId && b.id === c.background));
