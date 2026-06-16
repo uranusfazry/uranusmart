@@ -2246,34 +2246,30 @@
         const UrlManager = {
             tokenize(str) { TOKEN_MAP.forEach(([f,t]) => { str = str.split(f).join(t); }); return str; },
             detokenize(str) { [...TOKEN_MAP].reverse().forEach(([f,t]) => { str = str.split(t).join(f); }); return str; },
-            serialize(data) {
-                const ps = data.portals.map(p => [p.name,p.url,p.icon,p.color,p.description||"",p.password||""].join(SEP_FIELD)).join(SEP_ITEM);
-                return ps + SEP_SETTINGS + 
-                       (data.theme || "galactic") + SEP_SETTINGS + 
-                       (data.font || "sf-pro") + SEP_SETTINGS + 
-                       (data.background || "sasuke") + SEP_SETTINGS + 
-                       (data.websiteName || "MLBB SUYOU") + SEP_SETTINGS + 
-                       (data.themeTitle || "Sasuke Uchiha") + SEP_SETTINGS + 
-                       (data.visualEffect || "silver-executive") + SEP_SETTINGS +
-                       (data.character || "sasuke");
+            
+            // Menggunakan LZString untuk keamanan data dan ukuran optimal
+            encode(data) {
+                try {
+                    return LZString.compressToEncodedURIComponent(JSON.stringify(data));
+                } catch(e) {
+                    console.error("Encode Error:", e);
+                    return null;
+                }
             },
-            deserialize(str) {
-                if (!str) return { portals:[], theme:"galactic", font:"sf-pro", background:"sasuke", websiteName:"MLBB SUYOU", themeTitle:"Sasuke Uchiha", visualEffect:"silver-executive", character:"sasuke" };
-                const parts = str.split(SEP_SETTINGS);
-                const ps = parts[0] ? parts[0].split(SEP_ITEM).map(s => {
-                    const f = s.split(SEP_FIELD);
-                    return { name:f[0],url:f[1],icon:f[2],color:f[3],description:f[4]||"",password:f[5]||null };
-                }) : [];
-                return { 
-                    portals: ps, 
-                    theme: parts[1] || "galactic", 
-                    font: parts[2] || "sf-pro",
-                    background: parts[3] || "sasuke",
-                    websiteName: parts[4] || "MLBB SUYOU",
-                    themeTitle: parts[5] || "Sasuke Uchiha",
-                    visualEffect: parts[6] || "silver-executive",
-                    character: parts[7] || "sasuke"
-                };
+            decode(data) {
+                try {
+                    // Membersihkan prefix jika ada
+                    if (data && data.startsWith('v5_')) {
+                        data = data.substring(3);
+                    }
+                    return JSON.parse(LZString.decompressFromEncodedURIComponent(data));
+                } catch(e) {
+                    console.error("Decode Error:", e);
+                    return null;
+                }
+            },
+            load(data) {
+                return this.decode(data);
             }
         };
 
@@ -2646,51 +2642,143 @@
         // SMART LINK & VAULT (BACKUP/IMPORT)
         // ============================================================
         window.generateSmartLink = function() {
+            const MAX_QR_LENGTH = window.MAX_QR_LENGTH || 2953;
+            console.log("=== SMART LINK START ===");
+
             const portalData = localStorage.getItem('portals');
-            if (!portalData || JSON.parse(portalData).length === 0) { window.showNotification('Kesalahan','Tidak ada portal untuk dibuat','error'); return; }
+            let parsed;
+            
+            // 5. Validasi localStorage Portal
+            try {
+                parsed = JSON.parse(portalData);
+                if (!parsed || parsed.length === 0) {
+                    window.showNotification('Kesalahan', 'Tidak ada portal untuk dibuat', 'error');
+                    return;
+                }
+            } catch(e) {
+                console.error("Parse Error:", e);
+                window.showNotification("Error", "Data portal rusak", "error");
+                return;
+            }
+
+            console.log("Portal Data:", portalData);
+            console.log("Parsed:", parsed);
+
             const inputField = document.getElementById('generated-smart-link');
             const modal = document.getElementById('smart-link-modal');
-            document.getElementById('btn-show-link').style.display = 'flex';
-            document.getElementById('link-content').style.display = 'none';
-            document.getElementById('btn-show-qr').style.display = 'flex';
-            document.getElementById('qr-content').style.display = 'none';
-            document.getElementById('capacity-container').classList.remove('hide-capacity');
+            const btnShowLink = document.getElementById('btn-show-link');
+            const linkContent = document.getElementById('link-content');
+            const btnShowQr = document.getElementById('btn-show-qr');
+            const qrContent = document.getElementById('qr-content');
+            const capacityContainer = document.getElementById('capacity-container');
+            const capacityBar = document.getElementById('capacity-bar');
+            const capacityText = document.getElementById('capacity-text');
+            const capacityDetail = document.getElementById('capacity-detail');
+            const qrDisplayCanvas = document.getElementById('qr-canvas-display');
+
+            // 9. Reset Progress Bar dan UI
+            btnShowLink.style.display = 'flex';
+            linkContent.style.display = 'none';
+            btnShowQr.style.display = 'flex';
+            qrContent.style.display = 'none';
+            capacityContainer.classList.remove('hide-capacity');
             modal.style.display = 'flex';
+            
             inputField.value = "Memproses...";
+            capacityBar.style.width = "0%";
+            capacityText.textContent = "0%";
+            capacityDetail.textContent = "Menghitung...";
+
             setTimeout(() => {
-                const parsed = JSON.parse(portalData);
-                const encoded = UrlManager.encode({ 
-                    portals: parsed, 
-                    theme: customizationSettings.theme, 
-                    font: customizationSettings.font,
-                    background: customizationSettings.background,
-                    websiteName: customizationSettings.websiteName,
-                    themeTitle: customizationSettings.themeTitle,
-                    visualEffect: customizationSettings.visualEffect,
-                    character: customizationSettings.character
-                });
-                if (encoded) {
+                try {
+                    // 7. Audit Library QRious
+                    if (typeof QRious === "undefined") {
+                        throw new Error("QRious library tidak termuat");
+                    }
+
+                    // 8. Audit Canvas QR
+                    if (!qrDisplayCanvas) {
+                        throw new Error("Canvas QR tidak ditemukan");
+                    }
+
+                    // 3. Validasi customizationSettings
+                    const settings = window.customizationSettings || {
+                        theme: "galactic",
+                        font: "sf-pro",
+                        background: "sasuke",
+                        websiteName: "PORTAL",
+                        themeTitle: "SMART PORTAL",
+                        visualEffect: "normal",
+                        character: "sasuke"
+                    };
+
+                    console.log("Settings:", settings);
+
+                    const dataToEncode = { 
+                        portals: parsed, 
+                        theme: settings.theme, 
+                        font: settings.font,
+                        background: settings.background,
+                        websiteName: settings.websiteName,
+                        themeTitle: settings.themeTitle,
+                        visualEffect: settings.visualEffect,
+                        character: settings.character
+                    };
+
+                    const encoded = UrlManager.encode(dataToEncode);
+                    console.log("Encoded:", encoded);
+
+                    if (!encoded) {
+                        throw new Error("Proses encode menghasilkan null");
+                    }
+
                     const finalParam = `v5_${encoded}`;
+                    console.log("Final Param:", finalParam);
+
                     if (finalParam.length > MAX_QR_LENGTH) {
                         modal.style.display = 'none';
                         document.getElementById('limit-warning-modal').style.display = 'flex';
                         return;
                     }
+
+                    // 10. Hitung Kapasitas Secara Real
                     const used = finalParam.length;
-                    const pct = Math.min(100, Math.round((used / MAX_QR_LENGTH) * 100));
-                    const rem = Math.max(0, MAX_QR_LENGTH - used);
-                    const bar = document.getElementById('capacity-bar');
-                    document.getElementById('capacity-text').textContent = pct + "%";
-                    document.getElementById('capacity-detail').textContent = `Sisa Karakter: ${rem}`;
-                    bar.style.width = pct + "%";
-                    bar.style.background = pct < 70 ? "var(--success-green)" : pct < 90 ? "var(--warning-yellow)" : "var(--error-red)";
+                    const percentage = Math.min(100, Math.round((used / MAX_QR_LENGTH) * 100));
+                    const remaining = Math.max(0, MAX_QR_LENGTH - used);
+
+                    capacityBar.style.width = percentage + "%";
+                    capacityText.textContent = percentage + "%";
+                    capacityDetail.textContent = `Sisa Karakter: ${remaining}`;
+                    capacityBar.style.background = percentage < 70 ? "var(--success-green)" : percentage < 90 ? "var(--warning-yellow)" : "var(--error-red)";
+
+                    // 11. Pastikan Smart Link Selalu Dibuat
                     const finalUrl = `${window.location.origin}${window.location.pathname}?p=${finalParam}`;
                     inputField.value = finalUrl;
-                    currentGeneratedUrl = finalUrl;
-                    renderCustomQR(document.getElementById('qr-canvas-display'), finalUrl, false);
-                } else {
-                    inputField.value = "Kesalahan dalam memproses tautan.";
-                    window.showNotification('Kesalahan','Gagal membuat Smart Link','error');
+                    window.currentGeneratedUrl = finalUrl;
+                    console.log("Final URL:", finalUrl);
+
+                    // 12. Auto Reveal Hasil
+                    btnShowLink.style.display = "none";
+                    linkContent.style.display = "block";
+                    btnShowQr.style.display = "none";
+                    qrContent.style.display = "block";
+                    capacityContainer.classList.add('hide-capacity');
+
+                    // 13. Audit renderCustomQR()
+                    try {
+                        renderCustomQR(qrDisplayCanvas, finalUrl, false);
+                    } catch (qrError) {
+                        console.error("QR Render Error:", qrError);
+                        window.showNotification("Warning", "Link dibuat, namun QR Code gagal dirender", "warning");
+                    }
+
+                    console.log("=== SMART LINK END ===");
+
+                } catch (error) {
+                    console.error("=== SMART LINK ERROR ===", error);
+                    // 14. Tambahkan Fail Safe
+                    inputField.value = "Gagal membuat Smart Link";
+                    window.showNotification("Error", error.message || "Gagal memproses tautan", "error");
                 }
             }, 100);
         };
