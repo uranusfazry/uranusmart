@@ -3174,9 +3174,13 @@
                     avatar.src = val; 
                 } else {
                     // Fallback ke avatar bawaan karakter jika input dikosongkan
-                    const charId = customizationSettings.character || 'sasuke';
-                    const ch = CHARACTERS.find(c => c.id === charId);
-                    if (ch) avatar.src = ch.avatar;
+                    if (customizationSettings.character === 'custom' && customizationSettings.customCharacter) {
+                        avatar.src = customizationSettings.customCharacter.avatar;
+                    } else {
+                        const charId = customizationSettings.character || 'sasuke';
+                        const ch = CHARACTERS.find(c => c.id === charId);
+                        if (ch) avatar.src = ch.avatar;
+                    }
                 }
             });
         }
