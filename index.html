@@ -1149,7 +1149,7 @@
         .status-unset { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); }
 
         /* PATCH CSS: PROFESSIONAL FIXED PREVIEW IMAGE */
-        #preview-img, .preview-modal img {
+        #preview-img {
             pointer-events: none !important;
             user-select: none !important;
             -webkit-user-select: none !important;
@@ -1159,11 +1159,9 @@
             -webkit-touch-callout: none !important;
             touch-action: none !important;
             cursor: default !important;
-            border-radius: 16px !important;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25) !important;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             background: transparent;
-            object-fit: contain !important;
-            object-position: center !important;
         }
 
         /* ============================================= */
@@ -1858,11 +1856,11 @@
     </div>
 
     <!-- Preview Media Modal -->
-    <div id="preview-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden modal-overlay preview-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center; z-index: 99999999;">
+    <div id="preview-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden modal-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center; z-index: 99999999;">
         <div class="modal-content premium-modal" style="max-width: 420px !important;">
             <button onclick="document.getElementById('preview-modal').style.display = 'none'" class="modal-close-btn" style="top: 16px; right: 16px;"><i class="fas fa-times"></i></button>
             <h3 style="color: #fff; font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; text-align: center;" id="preview-title">Preview</h3>
-            <div id="preview-container" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: 240px;">
+            <div id="preview-container" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: 240px;">
                 <!-- PATCH HTML: draggable="false", loading="eager", decoding="sync" -->
                 <img id="preview-img" src="" style="max-width: 100%; max-height: 50vh; display: none; object-fit: contain;" draggable="false" loading="eager" decoding="sync" oncontextmenu="return false;">
                 <div id="preview-empty" style="color: rgba(255,255,255,0.4); font-size: 0.85rem; padding: 32px; text-align: center;">
@@ -2079,7 +2077,8 @@
         character: "sasuke",
         characterProfiles: {}, // NEW: To store per-character settings
         portraitImage: "", // PATCH: Custom Portrait
-        landscapeImage: "" // PATCH: Custom Landscape
+        landscapeImage: "", // PATCH: Custom Landscape
+        customCharacter: null // PATCH: Custom Character
     };
 
     function loadCustomization() {
@@ -2174,6 +2173,20 @@
             };
             charInner.appendChild(opt);
         });
+
+        // PATCH: Tambahkan Custom Character ke Dropdown (Anti Duplikat)
+        if (customizationSettings.customCharacter) {
+            const cc = customizationSettings.customCharacter;
+            const opt = document.createElement('div');
+            opt.className = `forge-option char-opt-custom`;
+            opt.innerHTML = `<img class="opt-dot" src="${cc.avatar}" alt=""> <span>${cc.name}</span> <i class="fas fa-check opt-check"></i>`;
+            opt.onclick = () => {
+                selectCharacter('custom');
+                if (closeMobileOnClick) closeMobileMenu();
+            };
+            charInner.appendChild(opt);
+        }
+
         charAccordion.appendChild(charInner);
         wireAccordionToggle(charItem, charAccordion, container);
         custGroup.appendChild(charItem);
@@ -2336,6 +2349,9 @@
     }
 
     function getCharacterName(charId) {
+        if (charId === 'custom' && customizationSettings.customCharacter) {
+            return customizationSettings.customCharacter.name;
+        }
         const c = CHARACTERS.find(x => x.id === charId) || CHARACTERS[0];
         return c.name;
     }
@@ -2387,6 +2403,11 @@
                 panel.querySelectorAll(`.char-opt-${c.id}`).forEach(opt => {
                     opt.classList.toggle('active', customizationSettings.character === c.id);
                 });
+            });
+
+            // PATCH: Active State untuk Custom Character
+            panel.querySelectorAll(`.char-opt-custom`).forEach(opt => {
+                opt.classList.toggle('active', customizationSettings.character === 'custom');
             });
 
             FONTS.forEach(f => {
@@ -2792,26 +2813,26 @@
             // Menggunakan 'true' agar event dicegat sebelum browser memprosesnya
             document.addEventListener("dragstart", e => {
                 // Tangkap IMG atau container preview (karena pointer-events:none tembus ke container)
-                if(e.target.tagName === "IMG" || e.target.closest('#preview-container') || e.target.closest('.profile') || e.target.matches('.preview-modal img')) {
+                if(e.target.tagName === "IMG" || e.target.closest('#preview-container') || e.target.closest('.profile')) {
                     e.preventDefault();
                 }
             }, true);
 
             document.addEventListener("mousedown", e => {
-                if(e.target.tagName === "IMG" || e.target.closest('#preview-container') || e.target.closest('.profile') || e.target.matches('.preview-modal img')) {
+                if(e.target.tagName === "IMG" || e.target.closest('#preview-container') || e.target.closest('.profile')) {
                     e.preventDefault();
                 }
             }, true);
 
             document.addEventListener("touchstart", e => {
                 // Cegah sentuh-tahan pada area preview agar tidak memicu seleksi iOS/Android
-                if(e.target.closest('#preview-container') || e.target.closest('.profile') || e.target.matches('.preview-modal img')) {
+                if(e.target.closest('#preview-container') || e.target.closest('.profile')) {
                     e.preventDefault();
                 }
             }, { passive: false, capture: true });
 
             document.addEventListener("contextmenu", e => {
-                if(e.target.tagName === "IMG" || e.target.closest('#preview-container') || e.target.closest('.profile') || e.target.matches('.preview-modal img')) {
+                if(e.target.tagName === "IMG" || e.target.closest('#preview-container') || e.target.closest('.profile')) {
                     e.preventDefault();
                 }
             }, true);
@@ -3080,10 +3101,32 @@
             customizationSettings.portraitImage = document.getElementById('prof-portrait-image') ? document.getElementById('prof-portrait-image').value : '';
             customizationSettings.landscapeImage = document.getElementById('prof-landscape-image') ? document.getElementById('prof-landscape-image').value : '';
             
+            // PATCH: Buat/Update Custom Character Persistent
+            const customHeroName = customizationSettings.heroName ? customizationSettings.heroName.toUpperCase() : "KARAKTER CUSTOM";
+            customizationSettings.customCharacter = {
+                id: 'custom',
+                name: '⭐ ' + customHeroName,
+                websiteName: customizationSettings.websiteName,
+                heroName: customizationSettings.heroName,
+                heroSubtitle: customizationSettings.heroSubtitle,
+                themeTitle: customizationSettings.themeTitle,
+                logoUrl: customizationSettings.logoUrl,
+                avatar: customizationSettings.heroImage || 'https://files.catbox.moe/7bhm9w.webp',
+                portraitImage: customizationSettings.portraitImage,
+                landscapeImage: customizationSettings.landscapeImage
+            };
+            customizationSettings.character = 'custom';
+
             saveCustomization();
             applyAllCustomizations();
+            
+            // PATCH: Render ulang Character Selector secara realtime
+            buildForgePanel('desktop-forge-panel', false);
+            buildForgePanel('mobile-forge-panel', true);
+            refreshAllForgeUI();
+            
             document.getElementById('profile-modal').style.display = 'none';
-            window.showNotification('Berhasil', 'Identitas profil disimpan secara permanen.', 'success');
+            window.showNotification('Berhasil', 'Karakter Custom berhasil diperbarui.', 'success');
         });
 
         function setupProfileLivePreview() {
@@ -3604,14 +3647,26 @@
      * Preload semua asset satu karakter (avatar + portrait + landscape + bg)
      */
     function preloadCharacterAssets(charId) {
-        const char = CHARACTERS.find(c => c.id === charId);
+        let char;
+        if (charId === 'custom' && customizationSettings.customCharacter) {
+            char = customizationSettings.customCharacter;
+        } else {
+            char = CHARACTERS.find(c => c.id === charId);
+        }
         if (!char) return Promise.resolve();
-        const bg = BACKGROUNDS.find(b => b.id === char.background) || BACKGROUNDS[0];
+        
+        const bgId = (charId === 'custom') ? customizationSettings.background : char.background;
+        const bg = BACKGROUNDS.find(b => b.id === bgId) || BACKGROUNDS[0];
+        
+        const bgImgP = (charId === 'custom' && customizationSettings.portraitImage) ? customizationSettings.portraitImage : bg.imgP;
+        const bgImgL = (charId === 'custom' && customizationSettings.landscapeImage) ? customizationSettings.landscapeImage : bg.imgL;
+        const bgImgMain = (charId === 'custom' && customizationSettings.landscapeImage) ? customizationSettings.landscapeImage : bg.img;
+
         return Promise.all([
             preloadImage(char.avatar),
-            preloadImage(bg.imgP),
-            preloadImage(bg.imgL),
-            preloadImage(bg.img)
+            preloadImage(bgImgP),
+            preloadImage(bgImgL),
+            preloadImage(bgImgMain)
         ]);
     }
 
@@ -3742,12 +3797,21 @@
         if (isCharacterSwitching) return;
         isCharacterSwitching = true;
 
-        const char = CHARACTERS.find(c => c.id === charId);
+        let char, isCustom = false;
+        if (charId === 'custom' && customizationSettings.customCharacter) {
+            char = customizationSettings.customCharacter;
+            isCustom = true;
+        } else {
+            char = CHARACTERS.find(c => c.id === charId);
+        }
         if (!char) { isCharacterSwitching = false; return; }
 
         const allCached = characterAssetCache.has(char.avatar);
-        const bg = BACKGROUNDS.find(b => b.id === char.background) || BACKGROUNDS[0];
-        const bgCached = characterAssetCache.has(bg.img);
+        
+        const bgId = isCustom ? customizationSettings.background : char.background;
+        const bg = BACKGROUNDS.find(b => b.id === bgId) || BACKGROUNDS[0];
+        const finalBgUrl = (isCustom && customizationSettings.landscapeImage) ? customizationSettings.landscapeImage : bg.img;
+        const bgCached = characterAssetCache.has(finalBgUrl);
 
         // Tampilkan loading hanya jika belum di cache
         if (!allCached || !bgCached) {
@@ -3771,9 +3835,15 @@
         // Terapkan semua pengaturan
         applyTheme(customizationSettings.theme);
         applyFont(customizationSettings.font);
-        window.applyBackground(char.background);
+        window.applyBackground(isCustom ? customizationSettings.background : char.background);
         applyVisualEffect(customizationSettings.visualEffect);
-        applyIdentity(customizationSettings.websiteName, customizationSettings.themeTitle);
+        applyIdentity(
+            customizationSettings.websiteName, 
+            customizationSettings.heroName, 
+            customizationSettings.heroSubtitle, 
+            customizationSettings.logoUrl, 
+            customizationSettings.heroImage
+        );
 
         // Hapus blur grid setelah transisi
         setTimeout(() => {
@@ -3816,32 +3886,51 @@
      * Override selectCharacter agar pakai lazy load system
      */
     window.selectCharacter = function(charId) {
-        const c = CHARACTERS.find(x => x.id === charId);
+        let c, isCustom = false;
+        if (charId === 'custom' && customizationSettings.customCharacter) {
+            c = customizationSettings.customCharacter;
+            isCustom = true;
+        } else {
+            c = CHARACTERS.find(x => x.id === charId);
+        }
         if (!c) return;
 
         customizationSettings.character = charId;
 
-        if (!customizationSettings.characterProfiles) {
-            customizationSettings.characterProfiles = {};
+        if (isCustom) {
+            // Restore custom data
+            customizationSettings.websiteName = c.websiteName;
+            customizationSettings.heroName = c.heroName;
+            customizationSettings.heroSubtitle = c.heroSubtitle;
+            customizationSettings.themeTitle = c.themeTitle;
+            customizationSettings.logoUrl = c.logoUrl;
+            customizationSettings.heroImage = c.avatar;
+            customizationSettings.portraitImage = c.portraitImage;
+            customizationSettings.landscapeImage = c.landscapeImage;
+        } else {
+            // Restore default char logic
+            if (!customizationSettings.characterProfiles) {
+                customizationSettings.characterProfiles = {};
+            }
+            let profile = customizationSettings.characterProfiles[charId];
+            if (!profile) {
+                profile = { theme: c.theme, font: 'sf-pro', visualEffect: c.visualEffect, background: c.background };
+                customizationSettings.characterProfiles[charId] = profile;
+            }
+            customizationSettings.theme = profile.theme;
+            customizationSettings.font = profile.font || 'sf-pro';
+            customizationSettings.visualEffect = profile.visualEffect;
+            customizationSettings.background = profile.background;
+            customizationSettings.websiteName = c.websiteName;
+            customizationSettings.themeTitle = c.themeTitle;
+            
+            // Clear custom memory when picking default char
+            customizationSettings.heroName = ""; 
+            customizationSettings.heroSubtitle = "";
+            customizationSettings.heroImage = "";
+            customizationSettings.portraitImage = "";
+            customizationSettings.landscapeImage = "";
         }
-
-        let profile = customizationSettings.characterProfiles[charId];
-        if (!profile) {
-            profile = {
-                theme: c.theme,
-                font: 'sf-pro',
-                visualEffect: c.visualEffect,
-                background: c.background
-            };
-            customizationSettings.characterProfiles[charId] = profile;
-        }
-
-        customizationSettings.theme = profile.theme;
-        customizationSettings.font = profile.font || 'sf-pro';
-        customizationSettings.visualEffect = profile.visualEffect;
-        customizationSettings.background = profile.background;
-        customizationSettings.websiteName = c.websiteName;
-        customizationSettings.themeTitle = c.themeTitle;
 
         saveCustomization();
         refreshAllForgeUI();
