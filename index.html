@@ -1149,7 +1149,7 @@
         .status-unset { background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); }
 
         /* PATCH CSS: PROFESSIONAL FIXED PREVIEW IMAGE */
-        #preview-img {
+        #preview-img, .preview-modal img {
             pointer-events: none !important;
             user-select: none !important;
             -webkit-user-select: none !important;
@@ -1159,9 +1159,11 @@
             -webkit-touch-callout: none !important;
             touch-action: none !important;
             cursor: default !important;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 16px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25) !important;
             background: transparent;
+            object-fit: contain !important;
+            object-position: center !important;
         }
 
         /* ============================================= */
@@ -1856,11 +1858,11 @@
     </div>
 
     <!-- Preview Media Modal -->
-    <div id="preview-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden modal-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center; z-index: 99999999;">
+    <div id="preview-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden modal-overlay preview-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center; z-index: 99999999;">
         <div class="modal-content premium-modal" style="max-width: 420px !important;">
             <button onclick="document.getElementById('preview-modal').style.display = 'none'" class="modal-close-btn" style="top: 16px; right: 16px;"><i class="fas fa-times"></i></button>
             <h3 style="color: #fff; font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; text-align: center;" id="preview-title">Preview</h3>
-            <div id="preview-container" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: 240px;">
+            <div id="preview-container" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; min-height: 240px;">
                 <!-- PATCH HTML: draggable="false", loading="eager", decoding="sync" -->
                 <img id="preview-img" src="" style="max-width: 100%; max-height: 50vh; display: none; object-fit: contain;" draggable="false" loading="eager" decoding="sync" oncontextmenu="return false;">
                 <div id="preview-empty" style="color: rgba(255,255,255,0.4); font-size: 0.85rem; padding: 32px; text-align: center;">
@@ -2603,7 +2605,8 @@
                         character: decoded.character || "sasuke",
                         characterProfiles: {}, // Reset profiles untuk memori baru
                         portraitImage: decoded.portraitImage || "", // PATCH: Restore Portrait
-                        landscapeImage: decoded.landscapeImage || "" // PATCH: Restore Landscape
+                        landscapeImage: decoded.landscapeImage || "", // PATCH: Restore Landscape
+                        customCharacter: decoded.customCharacter || null // PATCH: Restore Custom Character
                     };
 
                     // Simpan state baru ke Local Storage agar tersimpan jika di-refresh
@@ -2789,26 +2792,26 @@
             // Menggunakan 'true' agar event dicegat sebelum browser memprosesnya
             document.addEventListener("dragstart", e => {
                 // Tangkap IMG atau container preview (karena pointer-events:none tembus ke container)
-                if(e.target.tagName === "IMG" || e.target.closest('#preview-container') || e.target.closest('.profile')) {
+                if(e.target.tagName === "IMG" || e.target.closest('#preview-container') || e.target.closest('.profile') || e.target.matches('.preview-modal img')) {
                     e.preventDefault();
                 }
             }, true);
 
             document.addEventListener("mousedown", e => {
-                if(e.target.tagName === "IMG" || e.target.closest('#preview-container') || e.target.closest('.profile')) {
+                if(e.target.tagName === "IMG" || e.target.closest('#preview-container') || e.target.closest('.profile') || e.target.matches('.preview-modal img')) {
                     e.preventDefault();
                 }
             }, true);
 
             document.addEventListener("touchstart", e => {
                 // Cegah sentuh-tahan pada area preview agar tidak memicu seleksi iOS/Android
-                if(e.target.closest('#preview-container') || e.target.closest('.profile')) {
+                if(e.target.closest('#preview-container') || e.target.closest('.profile') || e.target.matches('.preview-modal img')) {
                     e.preventDefault();
                 }
             }, { passive: false, capture: true });
 
             document.addEventListener("contextmenu", e => {
-                if(e.target.tagName === "IMG" || e.target.closest('#preview-container') || e.target.closest('.profile')) {
+                if(e.target.tagName === "IMG" || e.target.closest('#preview-container') || e.target.closest('.profile') || e.target.matches('.preview-modal img')) {
                     e.preventDefault();
                 }
             }, true);
@@ -3224,7 +3227,8 @@
                         character: settings.character || "sasuke",
                         // PATCH START: Append custom fields to Smart Link
                         portraitImage: settings.portraitImage || "",
-                        landscapeImage: settings.landscapeImage || ""
+                        landscapeImage: settings.landscapeImage || "",
+                        customCharacter: settings.customCharacter || null
                         // PATCH END
                     };
 
@@ -3525,6 +3529,7 @@
                             // PATCH START: Local Backup Restore
                             customizationSettings.portraitImage = imported.portraitImage || "";
                             customizationSettings.landscapeImage = imported.landscapeImage || "";
+                            customizationSettings.customCharacter = imported.customCharacter || null;
                             // PATCH END
                             saveCustomization();
                         } else if (Array.isArray(imported)) {
