@@ -1227,6 +1227,21 @@
         .logo-pulse { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
         .hide-capacity { opacity: 0; max-height: 0; margin-bottom: 0 !important; padding: 0 !important; border: none !important; overflow: hidden; transition: all 0.5s ease-in-out; }
 
+        /* V7: Disabled Button State & Blinking Alerts */
+        .btn-disabled {
+            opacity: 0.5 !important;
+            pointer-events: none !important;
+            cursor: not-allowed !important;
+            filter: grayscale(80%) !important;
+        }
+        .blink-red {
+            animation: blinkRed 1s infinite;
+        }
+        @keyframes blinkRed {
+            0%, 100% { color: var(--error-red); opacity: 1; }
+            50% { color: #fff; opacity: 0.5; }
+        }
+
         /* Notifications */
         .notif-container {
             position: fixed; top: 90px; right: 20px; z-index: 100000;
@@ -1651,50 +1666,59 @@
         </div>
     </div>
 
-    <!-- Smart Link Modal -->
+    <!-- Smart Link Modal V7 -->
     <div id="smart-link-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden modal-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center; z-index: 55;">
         <div class="modal-content">
             <button onclick="document.getElementById('smart-link-modal').style.display = 'none'" class="modal-close-btn"><i class="fas fa-times"></i></button>
-            <h2 class="modal-title-custom">Smart Link Siap <span style="display:inline-block; margin-left: 0.1em;">🚀</span></h2>
+            <h2 class="modal-title-custom" style="text-transform: uppercase;">Smart Link Siap <span style="display:inline-block; margin-left: 0.1em;">🚀</span></h2>
             <p class="modal-desc-custom">Link ini sudah berisi semua portal dan pengaturan kustomisasi kamu. Klik tombol di bawah untuk menampilkan.</p>
+            
+            <!-- V7 Capacity Container -->
             <div id="capacity-container" style="margin-bottom: 2.5rem; background: rgba(0,0,0,0.25); padding: 1.25rem 1.5rem; border-radius: 12px; border: 1px solid rgba(0, 200, 224, 0.15);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                    <span style="font-weight: 700; font-size: 0.9rem; color: var(--gold); letter-spacing: 0.05em;">Kapasitas Data</span>
-                    <span id="capacity-text" style="font-weight: 600; font-size: 0.85rem; color: rgba(255,255,255,0.9);">0%</span>
+                    <span style="font-family: var(--sf-pro); font-weight: 700; font-size: 0.9rem; color: var(--gold); letter-spacing: 0.05em; text-transform: uppercase;">Kapasitas Data</span>
+                    <span id="capacity-text" style="font-weight: 700; font-size: 1rem; color: #fff;">0%</span>
                 </div>
-                <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem;">
-                    <div id="capacity-bar" style="width: 0%; height: 100%; background: var(--success-green); transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1), background 0.6s ease; border-radius: 4px;"></div>
+                <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-bottom: 1rem; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);">
+                    <div id="capacity-bar" style="width: 0%; height: 100%; background: var(--gold); transition: width 0.1s linear, background 0.3s ease; border-radius: 4px;"></div>
                 </div>
-                <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
-                    <span id="capacity-detail" style="font-size: 0.75rem; color: rgba(255,255,255,0.6); letter-spacing: 0.02em;">Menghitung...</span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.75rem; color: rgba(255,255,255,0.6); text-align: left;">
+                    <div>Digunakan:<br><strong id="stat-used" style="color:#fff; font-size:0.85rem;">Menghitung...</strong></div>
+                    <div>Sisa:<br><strong id="stat-remain" style="color:#fff; font-size:0.85rem;">Menghitung...</strong></div>
+                    <div>Status:<br><strong id="stat-status" style="color:var(--gold); font-size:0.85rem;">MENGHITUNG...</strong></div>
                 </div>
             </div>
+
             <div class="modal-actions">
                 <div style="width: 100%;">
-                    <button id="btn-show-link" onclick="revealLink()" class="reveal-btn"><i class="fas fa-eye"></i> Tampilkan Link</button>
+                    <button id="btn-show-link" onclick="revealLink()" class="reveal-btn btn-disabled" style="text-transform: uppercase; font-weight: 700;"><i class="fas fa-eye"></i> Tampilkan Link</button>
                     <div id="link-content" class="hidden-content">
                         <input type="text" id="generated-smart-link" readonly style="background: rgba(0, 0, 0, 0.3); cursor: text; border: 1px solid var(--gold);">
                         <div style="display: flex; justify-content: center; margin-top: 1rem;">
-                            <button onclick="copySmartLink()" class="btn-lava" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"><i class="fas fa-copy"></i> Copy Smart Link</button>
+                            <button onclick="copySmartLink()" class="btn-lava" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem; text-transform: uppercase;"><i class="fas fa-copy"></i> Copy Smart Link</button>
                         </div>
                     </div>
                 </div>
                 <div style="width: 100%;">
-                    <button id="btn-show-qr" onclick="revealQR()" class="reveal-btn"><i class="fas fa-qrcode"></i> Tampilkan QR Code</button>
+                    <button id="btn-show-qr" onclick="revealQR()" class="reveal-btn btn-disabled" style="text-transform: uppercase; font-weight: 700;"><i class="fas fa-qrcode"></i> Tampilkan QR Code</button>
                     <div id="qr-content" class="hidden-content">
-                        <div id="qr-wrapper"><div class="qr-frame"><canvas id="qr-canvas-display"></canvas></div><button onclick="downloadHighResQR()" class="btn-download-4k"><i class="fas fa-download"></i> Unduh QR 4K</button></div>
+                        <div id="qr-wrapper"><div class="qr-frame"><canvas id="qr-canvas-display"></canvas></div><button onclick="downloadHighResQR()" class="btn-download-4k" style="text-transform: uppercase;"><i class="fas fa-download"></i> Unduh QR 4K</button></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Limit Warning Modal -->
+    <!-- Limit Warning Modal V7 -->
     <div id="limit-warning-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden modal-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center; z-index: 60;">
         <div class="modal-content" style="text-align: center;">
             <div style="font-size: 3rem; color: var(--gold); margin-bottom: 1rem;"><i class="fas fa-exclamation-triangle"></i></div>
             <h2 style="font-family: var(--sf-pro); font-size: 1.3rem; margin-bottom: 1rem; font-weight: 700; letter-spacing: -0.025em; color: var(--flame-red);">Kapasitas Maksimal ⚠️</h2>
-            <p style="margin-bottom: 1.5rem; font-size: 0.95rem; color: rgba(255, 255, 255, 0.9); line-height: 1.6;">Data portal Anda telah mencapai batas ukuran optimal untuk QR Code.<br><br><strong class="gold-text">Solusi:</strong> Persingkat Judul & Deskripsi, atau gunakan URL Shortener untuk link panjang.</p>
+            <p style="margin-bottom: 1.5rem; font-size: 0.95rem; color: rgba(255, 255, 255, 0.9); line-height: 1.6;">
+                Data portal Anda telah mencapai batas ukuran optimal untuk QR Code.
+                <br><br><span id="limit-current-chars" class="flame-text blink-red" style="font-weight: 700; font-size: 1.1rem;"></span><br><br>
+                <strong class="gold-text">Solusi:</strong> Persingkat Judul & Deskripsi, atau gunakan URL Shortener untuk link panjang.
+            </p>
             <div style="display: flex; justify-content: center;"><button onclick="document.getElementById('limit-warning-modal').style.display='none'" class="btn-lava">Mengerti & Perbaiki</button></div>
         </div>
     </div>
@@ -2642,13 +2666,13 @@
         // SMART LINK & VAULT (BACKUP/IMPORT)
         // ============================================================
         window.generateSmartLink = function() {
-            const MAX_QR_LENGTH = window.MAX_QR_LENGTH || 2953;
-            console.log("=== SMART LINK START ===");
+            const MAX_QR_LENGTH = 2900;
+            console.log("=== SMART LINK V7 START ===");
 
             const portalData = localStorage.getItem('portals');
             let parsed;
             
-            // 5. Validasi localStorage Portal
+            // 1. Validasi Data Storage
             try {
                 parsed = JSON.parse(portalData);
                 if (!parsed || parsed.length === 0) {
@@ -2661,127 +2685,177 @@
                 return;
             }
 
-            console.log("Portal Data:", portalData);
-            console.log("Parsed:", parsed);
+            // 2. Sistem Optimasi Data (Sanitasi Otomatis V7)
+            const optimizedPortals = parsed.map(p => {
+                const opt = { name: p.name, url: p.url };
+                // Hilangkan data tidak penting untuk menghemat ukuran link
+                if (p.icon && p.icon !== 'fas fa-mask') opt.icon = p.icon;
+                if (p.color && p.color !== '#4a0072') opt.color = p.color;
+                if (p.description && p.description.trim() !== "") opt.description = p.description;
+                if (p.password && p.password.trim() !== "") opt.password = p.password;
+                return opt;
+            });
 
-            const inputField = document.getElementById('generated-smart-link');
+            // 3. Setup UI Components
             const modal = document.getElementById('smart-link-modal');
             const btnShowLink = document.getElementById('btn-show-link');
-            const linkContent = document.getElementById('link-content');
             const btnShowQr = document.getElementById('btn-show-qr');
+            const linkContent = document.getElementById('link-content');
             const qrContent = document.getElementById('qr-content');
-            const capacityContainer = document.getElementById('capacity-container');
+            
             const capacityBar = document.getElementById('capacity-bar');
             const capacityText = document.getElementById('capacity-text');
-            const capacityDetail = document.getElementById('capacity-detail');
-            const qrDisplayCanvas = document.getElementById('qr-canvas-display');
+            const statUsed = document.getElementById('stat-used');
+            const statRemain = document.getElementById('stat-remain');
+            const statStatus = document.getElementById('stat-status');
+            const inputField = document.getElementById('generated-smart-link');
 
-            // 9. Reset Progress Bar dan UI
-            btnShowLink.style.display = 'flex';
-            linkContent.style.display = 'none';
-            btnShowQr.style.display = 'flex';
-            qrContent.style.display = 'none';
-            capacityContainer.classList.remove('hide-capacity');
+            // 4. Reset & Lock UI State
             modal.style.display = 'flex';
+            btnShowLink.style.display = 'flex';
+            btnShowQr.style.display = 'flex';
+            linkContent.style.display = 'none';
+            qrContent.style.display = 'none';
+            document.getElementById('capacity-container').classList.remove('hide-capacity');
             
-            inputField.value = "Memproses...";
-            capacityBar.style.width = "0%";
-            capacityText.textContent = "0%";
-            capacityDetail.textContent = "Menghitung...";
+            // Kunci tombol agar tidak bisa diklik saat proses
+            btnShowLink.classList.add('btn-disabled');
+            btnShowQr.classList.add('btn-disabled');
 
+            capacityBar.style.width = "0%";
+            capacityBar.style.background = "var(--gold)";
+            capacityText.textContent = "0%";
+            
+            if (statUsed) statUsed.textContent = `0 / ${MAX_QR_LENGTH}`;
+            if (statRemain) statRemain.textContent = "Menghitung...";
+            if (statStatus) {
+                statStatus.textContent = "MENGHITUNG...";
+                statStatus.style.color = "var(--gold)";
+                statStatus.classList.remove('blink-red');
+            }
+            inputField.value = "Memproses...";
+
+            // 5. Kalkulasi & Animasi V7
             setTimeout(() => {
                 try {
-                    // 7. Audit Library QRious
-                    if (typeof QRious === "undefined") {
-                        throw new Error("QRious library tidak termuat");
-                    }
+                    if (typeof QRious === "undefined") throw new Error("QRious library tidak termuat");
 
-                    // 8. Audit Canvas QR
-                    if (!qrDisplayCanvas) {
-                        throw new Error("Canvas QR tidak ditemukan");
-                    }
-
-                    // 3. Validasi customizationSettings
                     const settings = window.customizationSettings || {
-                        theme: "galactic",
-                        font: "sf-pro",
-                        background: "sasuke",
-                        websiteName: "PORTAL",
-                        themeTitle: "SMART PORTAL",
-                        visualEffect: "normal",
-                        character: "sasuke"
+                        theme: "galactic", font: "sf-pro", background: "sasuke",
+                        websiteName: "PORTAL", themeTitle: "SMART PORTAL",
+                        visualEffect: "normal", character: "sasuke"
                     };
 
-                    console.log("Settings:", settings);
-
                     const dataToEncode = { 
-                        portals: parsed, 
-                        theme: settings.theme, 
-                        font: settings.font,
-                        background: settings.background,
-                        websiteName: settings.websiteName,
-                        themeTitle: settings.themeTitle,
-                        visualEffect: settings.visualEffect,
+                        portals: optimizedPortals, 
+                        theme: settings.theme, font: settings.font,
+                        background: settings.background, websiteName: settings.websiteName,
+                        themeTitle: settings.themeTitle, visualEffect: settings.visualEffect,
                         character: settings.character
                     };
 
                     const encoded = UrlManager.encode(dataToEncode);
-                    console.log("Encoded:", encoded);
-
-                    if (!encoded) {
-                        throw new Error("Proses encode menghasilkan null");
-                    }
+                    if (!encoded) throw new Error("Proses encode gagal (Data Null)");
 
                     const finalParam = `v5_${encoded}`;
-                    console.log("Final Param:", finalParam);
-
-                    if (finalParam.length > MAX_QR_LENGTH) {
-                        modal.style.display = 'none';
-                        document.getElementById('limit-warning-modal').style.display = 'flex';
-                        return;
-                    }
-
-                    // 10. Hitung Kapasitas Secara Real
-                    const used = finalParam.length;
-                    const percentage = Math.min(100, Math.round((used / MAX_QR_LENGTH) * 100));
-                    const remaining = Math.max(0, MAX_QR_LENGTH - used);
-
-                    capacityBar.style.width = percentage + "%";
-                    capacityText.textContent = percentage + "%";
-                    capacityDetail.textContent = `Sisa Karakter: ${remaining}`;
-                    capacityBar.style.background = percentage < 70 ? "var(--success-green)" : percentage < 90 ? "var(--warning-yellow)" : "var(--error-red)";
-
-                    // 11. Pastikan Smart Link Selalu Dibuat
+                    const usedChars = finalParam.length;
                     const finalUrl = `${window.location.origin}${window.location.pathname}?p=${finalParam}`;
-                    inputField.value = finalUrl;
-                    window.currentGeneratedUrl = finalUrl;
-                    console.log("Final URL:", finalUrl);
 
-                    // 12. Auto Reveal Hasil
-                    btnShowLink.style.display = "none";
-                    linkContent.style.display = "block";
-                    btnShowQr.style.display = "none";
-                    qrContent.style.display = "block";
-                    capacityContainer.classList.add('hide-capacity');
+                    const targetPercentRaw = (usedChars / MAX_QR_LENGTH) * 100;
+                    const targetPercent = Math.min(100, targetPercentRaw);
+                    const remainingChars = Math.max(0, MAX_QR_LENGTH - usedChars);
 
-                    // 13. Audit renderCustomQR()
-                    try {
-                        renderCustomQR(qrDisplayCanvas, finalUrl, false);
-                    } catch (qrError) {
-                        console.error("QR Render Error:", qrError);
-                        window.showNotification("Warning", "Link dibuat, namun QR Code gagal dirender", "warning");
-                    }
+                    let currentIter = 0;
+                    const animFrames = 30; // Sekitar 900ms durasi animasi
+                    
+                    const interval = setInterval(() => {
+                        currentIter++;
+                        // Efek melambat di akhir (Ease-Out Math)
+                        const easeOut = 1 - Math.pow(1 - (currentIter / animFrames), 3);
+                        const displayPercent = Math.round(targetPercent * easeOut);
+                        const displayChars = Math.round(usedChars * easeOut);
+                        
+                        capacityBar.style.width = displayPercent + "%";
+                        capacityText.textContent = displayPercent + "%";
+                        if (statUsed) statUsed.textContent = `${displayChars} / ${MAX_QR_LENGTH}`;
 
-                    console.log("=== SMART LINK END ===");
+                        if (currentIter >= animFrames) {
+                            clearInterval(interval);
+                            finishSmartLinkProcess(usedChars, MAX_QR_LENGTH, targetPercentRaw, remainingChars, finalUrl, finalParam);
+                        }
+                    }, 30);
 
                 } catch (error) {
                     console.error("=== SMART LINK ERROR ===", error);
-                    // 14. Tambahkan Fail Safe
-                    inputField.value = "Gagal membuat Smart Link";
+                    modal.style.display = 'none';
                     window.showNotification("Error", error.message || "Gagal memproses tautan", "error");
                 }
-            }, 100);
+            }, 300);
         };
+
+        function finishSmartLinkProcess(usedChars, maxLimit, percentRaw, remaining, finalUrl, finalParam) {
+            const capacityBar = document.getElementById('capacity-bar');
+            const statUsed = document.getElementById('stat-used');
+            const statRemain = document.getElementById('stat-remain');
+            const statStatus = document.getElementById('stat-status');
+            
+            const btnShowLink = document.getElementById('btn-show-link');
+            const btnShowQr = document.getElementById('btn-show-qr');
+            const inputField = document.getElementById('generated-smart-link');
+
+            if (statUsed) statUsed.textContent = `${usedChars} / ${maxLimit}`;
+            if (statRemain) statRemain.textContent = `${remaining} Karakter`;
+            
+            let barColor = "var(--success-green)";
+            let statusText = "AMAN";
+            let statusColor = "var(--success-green)";
+
+            if (percentRaw > 100) {
+                // STOP PROCESS - ZONA KRITIS MAKSIMAL ⛔
+                document.getElementById('smart-link-modal').style.display = 'none';
+                const limitCharsEl = document.getElementById('limit-current-chars');
+                if(limitCharsEl) limitCharsEl.textContent = `Peringatan: ${usedChars} Karakter`;
+                
+                document.getElementById('limit-warning-modal').classList.remove('hidden');
+                document.getElementById('limit-warning-modal').style.display = 'flex';
+                return; // Batalkan pembuatan QR/Link
+            } 
+            else if (percentRaw >= 90) {
+                // ZONA KRITIS 🔴
+                barColor = "var(--error-red)";
+                statusText = "KRITIS";
+                statusColor = "var(--error-red)";
+            } 
+            else if (percentRaw >= 70) {
+                // ZONA WASPADA 🟡
+                barColor = "var(--warning-yellow)";
+                statusText = "HAMPIR PENUH";
+                statusColor = "var(--warning-yellow)";
+            }
+
+            capacityBar.style.background = barColor;
+            if (statStatus) {
+                statStatus.textContent = statusText;
+                statStatus.style.color = statusColor;
+            }
+
+            inputField.value = finalUrl;
+            window.currentGeneratedUrl = finalUrl;
+            
+            // Buka kunci tombol
+            btnShowLink.classList.remove('btn-disabled');
+            btnShowQr.classList.remove('btn-disabled');
+
+            const qrDisplayCanvas = document.getElementById('qr-canvas-display');
+            if (qrDisplayCanvas) {
+                try {
+                    renderCustomQR(qrDisplayCanvas, finalUrl, false);
+                } catch (qrError) {
+                    console.error("QR Render Error:", qrError);
+                }
+            }
+            console.log("=== SMART LINK V7 END ===");
+        }
 
         function renderCustomQR(targetCanvas, textData, isHighQuality) {
             const size = isHighQuality ? 3000 : 600;
