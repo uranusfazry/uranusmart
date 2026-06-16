@@ -3245,7 +3245,8 @@
             }
 
             inputField.value = finalUrl;
-            window.currentGeneratedUrl = finalUrl;
+            currentGeneratedUrl = finalUrl; // FIX: Update variabel lokal
+            window.currentGeneratedUrl = finalUrl; // FIX: Update variabel global
             
             // Buka kunci tombol
             btnShowLink.classList.remove('btn-disabled');
@@ -3361,7 +3362,10 @@
         }
 
         window.downloadHighResQR = async function() {
-            if (!currentGeneratedUrl) { 
+            // FIX: Gunakan fallback ke window.currentGeneratedUrl jika lokal kosong
+            const activeUrl = currentGeneratedUrl || window.currentGeneratedUrl;
+
+            if (!activeUrl) { 
                 window.showNotification('Kesalahan','Smart Link belum dibuat','error'); 
                 return; 
             }
@@ -3377,7 +3381,7 @@
                 const canvas4K = document.createElement('canvas');
                 
                 // Tunggu proses render QR hingga selesai secara sinkronus (await)
-                await renderCustomQR(canvas4K, currentGeneratedUrl, true);
+                await renderCustomQR(canvas4K, activeUrl, true);
                 
                 // Ekstrak data dan buat elemen anchor download
                 const link = document.createElement("a");
