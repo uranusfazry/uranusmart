@@ -2455,10 +2455,6 @@
         let currentGeneratedUrl = "";
         const activeToasts = new Map();
 
-        // Build Forge Panels (new minimal UI)
-        buildForgePanel('desktop-forge-panel', false);
-        buildForgePanel('mobile-forge-panel', true);
-
         // Menutup dropdown saat klik diluar area
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.dropdown') && !e.target.closest('.nav-item')) {
@@ -2651,6 +2647,12 @@
                 loadFromStorage();
                 applyAllCustomizations();
             }
+
+            // PATCH START: Bangun UI Forge SETELAH data dimuat dari Storage/Smart Link
+            // Ini memastikan Karakter Custom yang tersimpan ikut di-render ke dalam menu dropdown
+            buildForgePanel('desktop-forge-panel', false);
+            buildForgePanel('mobile-forge-panel', true);
+            // PATCH END
 
             setupEventListeners();
             updateNavDisplay();
