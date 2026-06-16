@@ -3743,16 +3743,28 @@
         // Semua asset sudah di-preload sebelum ini dipanggil (via loadCharacter)
         // Jadi set src langsung — browser tidak perlu re-download
         setTimeout(() => {
-            // PATCH START: Prioritas Background (Fix <picture> tag override)
-            const isCustomLandscape = customizationSettings.landscapeImage && customizationSettings.landscapeImage.trim() !== "";
-            const finalBg = isCustomLandscape ? customizationSettings.landscapeImage : bgObj.img;
+            // PATCH START: Responsive Background (Portrait Mobile & Landscape Desktop)
+            const cPort = customizationSettings.portraitImage && customizationSettings.portraitImage.trim() !== "" ? customizationSettings.portraitImage : null;
+            const cLand = customizationSettings.landscapeImage && customizationSettings.landscapeImage.trim() !== "" ? customizationSettings.landscapeImage : null;
+
+            // Fallback Engine (Saling melengkapi jika salah satu kosong)
+            const finalPortrait = cPort || cLand || bgObj.imgP;
+            const finalLandscape = cLand || cPort || bgObj.imgL;
+            const finalBg = window.innerWidth <= 768 ? finalPortrait : finalLandscape;
             
-            console.log("Final Background:", finalBg);
+            console.log("Portrait BG (Mobile):", finalPortrait);
+            console.log("Landscape BG (Desktop):", finalLandscape);
             console.groupEnd(); // End Debug
 
-            // WAJIB timpa srcset pada <source> agar tidak membandel
-            if (portrait) portrait.srcset = isCustomLandscape ? finalBg : bgObj.imgP;
-            if (landscape) landscape.srcset = isCustomLandscape ? finalBg : bgObj.imgL;
+            // WAJIB timpa srcset & media query agar browser merender sesuai ukuran device
+            if (portrait) {
+                portrait.media = "(max-width: 768px)";
+                portrait.srcset = finalPortrait;
+            }
+            if (landscape) {
+                landscape.media = "(min-width: 769px)";
+                landscape.srcset = finalLandscape;
+            }
             
             if (bgImg) {
                 bgImg.src = finalBg;
@@ -3810,8 +3822,14 @@
         
         const bgId = isCustom ? customizationSettings.background : char.background;
         const bg = BACKGROUNDS.find(b => b.id === bgId) || BACKGROUNDS[0];
-        const finalBgUrl = (isCustom && customizationSettings.landscapeImage) ? customizationSettings.landscapeImage : bg.img;
-        const bgCached = characterAssetCache.has(finalBgUrl);
+        
+        // PATCH START: Validasi cache layar aktif (Mencegah blank loading di Mobile/Desktop)
+        const cPort = isCustom && customizationSettings.portraitImage ? customizationSettings.portraitImage : null;
+        const cLand = isCustom && customizationSettings.landscapeImage ? customizationSettings.landscapeImage : null;
+        const activeBgUrl = window.innerWidth <= 768 ? (cPort || cLand || bg.imgP) : (cLand || cPort || bg.imgL);
+        
+        const bgCached = characterAssetCache.has(activeBgUrl);
+        // PATCH END
 
         // Tampilkan loading hanya jika belum di cache
         if (!allCached || !bgCached) {
