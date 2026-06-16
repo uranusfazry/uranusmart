@@ -2814,15 +2814,17 @@
                 const bgImg = document.getElementById('bg-image');
                 if (!bgImg) return;
                 
-                const cPort = customizationSettings.portraitImage && customizationSettings.portraitImage.trim() !== "" ? customizationSettings.portraitImage : null;
-                const cLand = customizationSettings.landscapeImage && customizationSettings.landscapeImage.trim() !== "" ? customizationSettings.landscapeImage : null;
-                
                 const bgObj = BACKGROUNDS.find(b => b.id === customizationSettings.background) || BACKGROUNDS[0];
                 
-                const finalPortrait = cPort || bgObj.imgP;
-                const finalLandscape = cLand || bgObj.imgL;
+                const portraitSrc = customizationSettings.portraitImage && customizationSettings.portraitImage.trim() !== "" 
+                    ? customizationSettings.portraitImage.trim() 
+                    : bgObj.imgP;
+                    
+                const landscapeSrc = customizationSettings.landscapeImage && customizationSettings.landscapeImage.trim() !== "" 
+                    ? customizationSettings.landscapeImage.trim() 
+                    : bgObj.imgL;
                 
-                bgImg.src = window.innerWidth <= 768 ? finalPortrait : finalLandscape;
+                bgImg.src = window.innerWidth <= 768 ? portraitSrc : landscapeSrc;
             });
 
             // PATCH JS: GLOBAL ANTI GHOST IMAGE & DRAG (CAPTURE PHASE)
@@ -3759,29 +3761,26 @@
         // Semua asset sudah di-preload sebelum ini dipanggil (via loadCharacter)
         // Jadi set src langsung — browser tidak perlu re-download
         setTimeout(() => {
-            // PATCH START: Strict Responsive Background (Portrait Mobile & Landscape Desktop)
-            const cPort = customizationSettings.portraitImage && customizationSettings.portraitImage.trim() !== "" ? customizationSettings.portraitImage : null;
-            const cLand = customizationSettings.landscapeImage && customizationSettings.landscapeImage.trim() !== "" ? customizationSettings.landscapeImage : null;
-
-            const finalPortrait = cPort || bgObj.imgP;
-            const finalLandscape = cLand || bgObj.imgL;
-            const finalBg = window.innerWidth <= 768 ? finalPortrait : finalLandscape;
-            
-            console.log("Strict Portrait (Mobile):", finalPortrait);
-            console.log("Strict Landscape (Desktop):", finalLandscape);
-            console.groupEnd(); // End Debug
+            // PATCH START: Responsive Portrait & Landscape Independen
+            const portraitSrc = customizationSettings.portraitImage && customizationSettings.portraitImage.trim() !== "" 
+                ? customizationSettings.portraitImage.trim() 
+                : bgObj.imgP;
+                
+            const landscapeSrc = customizationSettings.landscapeImage && customizationSettings.landscapeImage.trim() !== "" 
+                ? customizationSettings.landscapeImage.trim() 
+                : bgObj.imgL;
 
             if (portrait) {
                 portrait.media = "(max-width: 768px)";
-                portrait.srcset = finalPortrait;
+                portrait.srcset = portraitSrc;
             }
             if (landscape) {
                 landscape.media = "(min-width: 769px)";
-                landscape.srcset = finalLandscape;
+                landscape.srcset = landscapeSrc;
             }
             
             if (bgImg) {
-                bgImg.src = finalBg;
+                bgImg.src = window.innerWidth <= 768 ? portraitSrc : landscapeSrc;
                 bgImg.onload = () => bgImg.classList.remove('loading');
                 bgImg.onerror = () => bgImg.classList.remove('loading');
             }
@@ -3838,10 +3837,15 @@
         const bg = BACKGROUNDS.find(b => b.id === bgId) || BACKGROUNDS[0];
         
         // PATCH START: Validasi cache layar aktif (Mencegah blank loading di Mobile/Desktop)
-        const cPort = isCustom && customizationSettings.portraitImage ? customizationSettings.portraitImage : null;
-        const cLand = isCustom && customizationSettings.landscapeImage ? customizationSettings.landscapeImage : null;
-        const activeBgUrl = window.innerWidth <= 768 ? (cPort || cLand || bg.imgP) : (cLand || cPort || bg.imgL);
-        
+        const portraitSrc = isCustom && customizationSettings.portraitImage && customizationSettings.portraitImage.trim() !== "" 
+            ? customizationSettings.portraitImage.trim() 
+            : bg.imgP;
+            
+        const landscapeSrc = isCustom && customizationSettings.landscapeImage && customizationSettings.landscapeImage.trim() !== "" 
+            ? customizationSettings.landscapeImage.trim() 
+            : bg.imgL;
+            
+        const activeBgUrl = window.innerWidth <= 768 ? portraitSrc : landscapeSrc;
         const bgCached = characterAssetCache.has(activeBgUrl);
         // PATCH END
 
