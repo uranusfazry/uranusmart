@@ -1718,24 +1718,31 @@
                         <label class="premium-label">Hero Subtitle</label>
                         <input type="text" id="prof-hero-subtitle" class="premium-input" placeholder="Contoh: GALACTIC STARHAWK">
                     </div>
+                    
+                    <!-- PATCH HTML START: Info Rasio Logo, Hero, Portrait, Landscape -->
                     <div>
-                        <label class="premium-label">Logo URL</label>
+                        <label class="premium-label">Logo URL (1:1)</label>
                         <input type="url" id="prof-logo-url" class="premium-input" placeholder="https://...">
+                        <span class="premium-hint">Ukuran disarankan: 512x512 &bull; 1024x1024</span>
                     </div>
                     <div>
-                        <label class="premium-label">Hero Image URL</label>
+                        <label class="premium-label">Avatar Hero URL (1:1)</label>
                         <input type="url" id="prof-hero-image" class="premium-input" placeholder="https://...">
+                        <span class="premium-hint">Ukuran disarankan: 512x512 &bull; 1024x1024</span>
                     </div>
                     
                     <!-- PATCH START: Portrait & Landscape URL + Helpers -->
                     <div>
-                        <label class="premium-label">Portrait Image URL (Avatar/Karakter)</label>
+                        <label class="premium-label">Portrait Image URL (9:16)</label>
                         <input type="url" id="prof-portrait-image" class="premium-input" placeholder="https://files.catbox.moe/...">
+                        <span class="premium-hint">Ukuran disarankan: 1080x1920 (Cocok untuk Karakter Vertikal)</span>
                     </div>
                     <div>
-                        <label class="premium-label">Landscape Image URL (Background/Banner)</label>
+                        <label class="premium-label">Landscape Image URL (16:9)</label>
                         <input type="url" id="prof-landscape-image" class="premium-input" placeholder="https://files.catbox.moe/...">
+                        <span class="premium-hint">Ukuran disarankan: 1920x1080 (Cocok untuk Banner / Background)</span>
                     </div>
+                    <!-- PATCH HTML END -->
 
                     <!-- Catbox Helper Card -->
                     <div class="catbox-helper">
@@ -2841,6 +2848,26 @@
         // ============================================================
         // PROFILE IDENTITAS LIVE PREVIEW
         // ============================================================
+        
+        // PATCH JS START: Fungsi Accordion & Modal Guide
+        window.toggleProfSection = function(headerEl) {
+            const content = headerEl.nextElementSibling;
+            const icon = headerEl.querySelector('.chevron');
+            content.classList.toggle('open');
+            if (content.classList.contains('open')) {
+                icon.style.transform = 'rotate(180deg)';
+                headerEl.style.borderColor = 'var(--gold)';
+            } else {
+                icon.style.transform = 'rotate(0deg)';
+                headerEl.style.borderColor = 'rgba(255,255,255,0.08)';
+            }
+        };
+
+        window.showCatboxGuideModal = function() {
+            document.getElementById('catbox-guide-modal').style.display = 'flex';
+        };
+        // PATCH JS END
+        
         window.showProfileModal = function() {
             document.getElementById('profile-modal').style.display = 'flex';
             document.getElementById('prof-website-name').value = customizationSettings.websiteName || '';
@@ -2977,16 +3004,19 @@
                     box.classList.add('error');
                     imgEl.style.display = 'none';
                     phEl.style.display = 'block';
-                    phEl.innerHTML = '❌ Gambar gagal dimuat';
+                    phEl.innerHTML = '<div class="preview-placeholder-modern"><div class="icon" style="color:var(--error-red);">❌</div><div>Gagal memuat</div></div>';
                 };
                 tempImg.src = val;
             };
 
+            // Gunakan UI modern untuk text fallback
+            const modernFallbackText = '<div class="preview-placeholder-modern"><div class="icon">🖼️</div><div>Belum ada gambar</div></div>';
+
             const pInput = document.getElementById('prof-portrait-image');
-            if (pInput) pInput.addEventListener('input', () => updateAdvancedPreview('prof-portrait-image', 'preview-box-portrait', 'Belum ada gambar (Portrait)', true));
+            if (pInput) pInput.addEventListener('input', () => updateAdvancedPreview('prof-portrait-image', 'preview-box-portrait', modernFallbackText, true));
 
             const lInput = document.getElementById('prof-landscape-image');
-            if (lInput) lInput.addEventListener('input', () => updateAdvancedPreview('prof-landscape-image', 'preview-box-landscape', 'Belum ada gambar (Landscape)', false));
+            if (lInput) lInput.addEventListener('input', () => updateAdvancedPreview('prof-landscape-image', 'preview-box-landscape', modernFallbackText, false));
             
             // PATCH START: Proteksi Global Tambahan Anti-Drag
             document.addEventListener('dragstart', function(e) {
