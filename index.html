@@ -2809,6 +2809,24 @@
             });
             window.addEventListener('resize', updateNavDisplay);
 
+            // PATCH JS: Responsive Background Resize Auto-Switch
+            window.addEventListener('resize', () => {
+                const bgImg = document.getElementById('bg-image');
+                if (!bgImg) return;
+
+                const bgObj = BACKGROUNDS.find(b => b.id === customizationSettings.background) || BACKGROUNDS[0];
+
+                const portraitSrc = customizationSettings.portraitImage?.trim()
+                    ? customizationSettings.portraitImage
+                    : bgObj.imgP;
+
+                const landscapeSrc = customizationSettings.landscapeImage?.trim()
+                    ? customizationSettings.landscapeImage
+                    : bgObj.imgL;
+
+                bgImg.src = window.innerWidth <= 768 ? portraitSrc : landscapeSrc;
+            });
+
             // PATCH JS: GLOBAL ANTI GHOST IMAGE & DRAG (CAPTURE PHASE)
             // Menggunakan 'true' agar event dicegat sebelum browser memprosesnya
             document.addEventListener("dragstart", e => {
@@ -3743,22 +3761,27 @@
         // Semua asset sudah di-preload sebelum ini dipanggil (via loadCharacter)
         // Jadi set src langsung — browser tidak perlu re-download
         setTimeout(() => {
-            // PATCH START: Prioritas Background (Fix <picture> tag override)
-            const isCustomLandscape = customizationSettings.landscapeImage && customizationSettings.landscapeImage.trim() !== "";
-            const finalBg = isCustomLandscape ? customizationSettings.landscapeImage : bgObj.img;
-            
-            console.log("Final Background:", finalBg);
-            console.groupEnd(); // End Debug
+            // PATCH START: Clean Responsive Background
+            const portraitSrc = customizationSettings.portraitImage?.trim()
+                ? customizationSettings.portraitImage
+                : bgObj.imgP;
 
-            // WAJIB timpa srcset pada <source> agar tidak membandel
-            if (portrait) portrait.srcset = isCustomLandscape ? finalBg : bgObj.imgP;
-            if (landscape) landscape.srcset = isCustomLandscape ? finalBg : bgObj.imgL;
-            
+            const landscapeSrc = customizationSettings.landscapeImage?.trim()
+                ? customizationSettings.landscapeImage
+                : bgObj.imgL;
+
+            if (portrait) portrait.srcset = portraitSrc;
+            if (landscape) landscape.srcset = landscapeSrc;
+
             if (bgImg) {
-                bgImg.src = finalBg;
+                bgImg.src = window.innerWidth <= 768 ? portraitSrc : landscapeSrc;
                 bgImg.onload = () => bgImg.classList.remove('loading');
                 bgImg.onerror = () => bgImg.classList.remove('loading');
             }
+
+            console.log("Portrait:", portraitSrc);
+            console.log("Landscape:", landscapeSrc);
+            console.log("Current Device:", window.innerWidth <= 768 ? "Mobile" : "Desktop");
             // PATCH END
             
             if (avatar) {
