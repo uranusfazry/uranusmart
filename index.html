@@ -64,6 +64,17 @@
             object-fit: cover;
             filter: brightness(0.3) saturate(1.5) hue-rotate(10deg);
             transition: transform 0.5s ease, opacity 0.5s ease, filter 0.5s ease;
+            
+            /* PATCH CSS START: Mencegah Background Di-drag & Dipilih */
+            pointer-events: none !important; /* Membuat background sepenuhnya tembus pandang dari klik */
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            -webkit-user-drag: none !important; /* Mencegah drag di browser berbasis Webkit */
+            -webkit-touch-callout: none !important; /* Mencegah menu "Save Image" saat klik tahan di Mobile */
+            touch-action: none !important;
+            /* PATCH CSS END */
         }
         #bg-image { opacity: 1; z-index: 0; }
         #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
@@ -1492,7 +1503,9 @@
         <picture>
             <source media="(orientation: portrait)" id="bg-portrait" srcset="https://files.catbox.moe/o20nyy.webp">
             <source media="(orientation: landscape)" id="bg-landscape" srcset="https://files.catbox.moe/sphwbb.webp">
-            <img id="bg-image" class="bg-media" src="https://files.catbox.moe/fexa8f.webp" alt="Background" crossorigin="anonymous">
+            <!-- PATCH HTML START: Tambahkan draggable="false" dan oncontextmenu -->
+            <img id="bg-image" class="bg-media" src="https://files.catbox.moe/fexa8f.webp" alt="Background" crossorigin="anonymous" draggable="false" oncontextmenu="return false;">
+            <!-- PATCH HTML END -->
         </picture>
     </div>
     <canvas id="particle-canvas"></canvas>
@@ -2914,6 +2927,12 @@
 
                 if (!imgEl) {
                     imgEl = document.createElement('img');
+                    
+                    // PATCH START: Proteksi Atribut HTML Dinamis
+                    imgEl.setAttribute('draggable', 'false');
+                    imgEl.setAttribute('oncontextmenu', 'return false;');
+                    // PATCH END
+                    
                     box.insertBefore(imgEl, box.firstChild);
                 }
 
@@ -2968,6 +2987,13 @@
 
             const lInput = document.getElementById('prof-landscape-image');
             if (lInput) lInput.addEventListener('input', () => updateAdvancedPreview('prof-landscape-image', 'preview-box-landscape', 'Belum ada gambar (Landscape)', false));
+            
+            // PATCH START: Proteksi Global Tambahan Anti-Drag
+            document.addEventListener('dragstart', function(e) {
+                if (e.target && e.target.matches('.preview-box img')) {
+                    e.preventDefault();
+                }
+            });
             // PATCH END
         }
 
