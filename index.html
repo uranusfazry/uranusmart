@@ -1479,7 +1479,7 @@
         <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 1rem;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div id="logo-container" style="display: flex; align-items: center; cursor: pointer; user-select: none;">
-                    <img src="https://files.catbox.moe/8ulhiv.webp" alt="Logo" class="logo-pulse" style="height: 50px; width: auto; border-radius: 50%;" draggable="false" crossorigin="anonymous">
+                    <img id="nav-logo-img" src="https://files.catbox.moe/8ulhiv.webp" alt="Logo" class="logo-pulse" style="height: 50px; width: auto; border-radius: 50%;" draggable="false" crossorigin="anonymous">
                     <span id="nav-website-name" style="font-weight: 700; font-size: 1.2rem; letter-spacing: -0.025em; margin-left: 0.25rem; color: var(--gold); text-transform: uppercase;">MLBB SUYOU</span>
                 </div>
 
@@ -1645,6 +1645,48 @@
                 <div class="premium-form-actions">
                     <button type="button" onclick="document.getElementById('add-portal-modal').style.display = 'none'" class="btn-premium-cancel">Batal</button>
                     <button type="submit" class="btn-premium-save">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profile Customization Modal -->
+    <div id="profile-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden modal-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center; z-index: 9999999;">
+        <div class="modal-content premium-modal">
+            <button onclick="document.getElementById('profile-modal').style.display = 'none'" class="modal-close-btn" style="top: 1.25rem; right: 1.25rem;"><i class="fas fa-times"></i></button>
+            
+            <div style="margin-bottom: 16px;">
+                <h2 class="gold-text" style="font-size: 20px; margin-bottom: 4px;">Identitas Profil</h2>
+                <p style="color: rgba(255,255,255,0.5); font-size: 12px; font-family: 'Inter', sans-serif;">Kustomisasi teks dan gambar header secara bebas.</p>
+            </div>
+
+            <form id="profile-form" style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div>
+                        <label class="premium-label">Website Name</label>
+                        <input type="text" id="prof-website-name" class="premium-input" placeholder="Contoh: MLBB FANNY">
+                    </div>
+                    <div>
+                        <label class="premium-label">Hero Name</label>
+                        <input type="text" id="prof-hero-name" class="premium-input" placeholder="Contoh: FANNY">
+                    </div>
+                    <div>
+                        <label class="premium-label">Hero Subtitle</label>
+                        <input type="text" id="prof-hero-subtitle" class="premium-input" placeholder="Contoh: GALACTIC STARHAWK">
+                    </div>
+                    <div>
+                        <label class="premium-label">Logo URL</label>
+                        <input type="url" id="prof-logo-url" class="premium-input" placeholder="https://...">
+                    </div>
+                    <div>
+                        <label class="premium-label">Hero Image URL</label>
+                        <input type="url" id="prof-hero-image" class="premium-input" placeholder="https://...">
+                    </div>
+                </div>
+
+                <div class="premium-form-actions">
+                    <button type="button" onclick="document.getElementById('profile-modal').style.display = 'none'" class="btn-premium-cancel">Batal</button>
+                    <button type="submit" class="btn-premium-save">Simpan Profil</button>
                 </div>
             </form>
         </div>
@@ -1830,8 +1872,12 @@
         theme: "galactic",
         font: "sf-pro",
         background: "sasuke",
-        websiteName: "MLBB SUYOU",
-        themeTitle: "Sasuke Uchiha",
+        websiteName: "MLBB FANNY",
+        heroName: "FANNY",
+        heroSubtitle: "GALACTIC STARHAWK",
+        logoUrl: "https://files.catbox.moe/8ulhiv.webp",
+        heroImage: "", // Kosong = Gunakan avatar bawaan tema
+        themeTitle: "GALACTIC STARHAWK", // Backward compatibility
         visualEffect: "silver-executive",
         character: "sasuke",
         characterProfiles: {} // NEW: To store per-character settings
@@ -1905,6 +1951,13 @@
 
         const custGroup = document.createElement('div');
         custGroup.className = 'forge-group';
+
+        // Profil & Identitas Item (NEW)
+        const profileItem = createSimpleItem('fa-id-card', 'Identitas Profil', () => {
+            showProfileModal();
+            if (closeMobileOnClick) closeMobileMenu();
+        });
+        custGroup.appendChild(profileItem);
 
         // Karakter item + accordion
         const charItem = createForgeItem('fa-user-ninja', 'Karakter', () => getCharacterName(customizationSettings.character), true);
@@ -2323,6 +2376,8 @@
                     console.log("Theme:", decoded.theme);
                     console.log("Background:", decoded.background);
                     console.log("Website Name:", decoded.websiteName);
+                    console.log("Hero Name:", decoded.heroName);
+                    console.log("Hero Subtitle:", decoded.heroSubtitle);
                     console.log("Font:", decoded.font);
                     console.log("Effect:", decoded.visualEffect);
                     console.groupEnd();
@@ -2341,9 +2396,13 @@
                         theme: decoded.theme || "galactic",
                         font: decoded.font || "sf-pro",
                         background: decoded.background || "sasuke",
-                        websiteName: decoded.websiteName || "MLBB SUYOU",
-                        themeTitle: decoded.themeTitle || "Sasuke Uchiha",
-                        visualEffect: decoded.visualEffect || "silver-executive",
+                        websiteName: decoded.websiteName || "MLBB FANNY",
+                        heroName: decoded.heroName || "FANNY",
+                        heroSubtitle: decoded.heroSubtitle || decoded.themeTitle || "GALACTIC STARHAWK",
+                        logoUrl: decoded.logoUrl || "https://files.catbox.moe/8ulhiv.webp",
+                        heroImage: decoded.heroImage || "",
+                        themeTitle: decoded.themeTitle || "GALACTIC STARHAWK",
+                        visualEffect: decoded.visualEffect || "normal",
                         character: decoded.character || "sasuke",
                         characterProfiles: {} // Reset profiles untuk memori baru
                     };
@@ -2385,7 +2444,13 @@
             applyFont(customizationSettings.font);
             applyBackground(customizationSettings.background);
             applyVisualEffect(customizationSettings.visualEffect);
-            applyIdentity(customizationSettings.websiteName, customizationSettings.themeTitle);
+            applyIdentity(
+                customizationSettings.websiteName,
+                customizationSettings.heroName,
+                customizationSettings.heroSubtitle || customizationSettings.themeTitle,
+                customizationSettings.logoUrl,
+                customizationSettings.heroImage
+            );
         }
 
         // ============================================================
@@ -2430,43 +2495,52 @@
             document.body.setAttribute('data-effect', effectId);
         };
 
-        window.applyIdentity = function(wName, tTitle) {
-            // Teks untuk Navbar menggunakan nama asli seutuhnya
-            document.getElementById('nav-website-name').textContent = wName;
+        window.applyIdentity = function(wName, hName, hSubtitle, logoUrl, heroImg) {
+            // Fallback Engine
+            const finalWName = wName || "MLBB FANNY";
+            let finalHName = hName;
+            if (!finalHName) {
+                // Backward compatibility: Auto-strip "MLBB " if heroName is missing
+                finalHName = finalWName.toUpperCase().startsWith("MLBB ") ? finalWName.substring(5) : finalWName;
+            }
+            const finalSubtitle = hSubtitle || "GALACTIC STARHAWK";
+            const finalLogo = logoUrl || "https://files.catbox.moe/8ulhiv.webp";
+
+            // Navbar Name
+            document.getElementById('nav-website-name').textContent = finalWName;
             
-            // Logika Cerdas: Hapus kata "MLBB " di depan khusus untuk judul besar (Hero)
-            let heroNameStr = wName;
-            if (heroNameStr.toUpperCase().startsWith("MLBB ")) {
-                heroNameStr = heroNameStr.substring(5);
+            // Hero Name
+            const heroTitle = document.getElementById('display-website-name');
+            if(heroTitle) {
+                heroTitle.textContent = finalHName;
+                heroTitle.setAttribute('data-text', finalHName);
             }
             
-            const heroTitle = document.getElementById('display-website-name');
-            heroTitle.textContent = heroNameStr;
-            heroTitle.setAttribute('data-text', heroNameStr); // Memastikan efek glitch mengikuti nama
-            
+            // Subtitle
             const themeTitle = document.getElementById('display-theme-title');
-            themeTitle.textContent = tTitle;
-            themeTitle.setAttribute('data-text', tTitle); // Memastikan efek glitch mengikuti subtitle
+            if(themeTitle) {
+                themeTitle.textContent = finalSubtitle;
+                themeTitle.setAttribute('data-text', finalSubtitle);
+            }
             
-            document.title = `MLBB Portal | ${heroNameStr}`;
+            // Document Title
+            document.title = `MLBB Portal | ${finalHName}`;
             
-            // Ubah teks copyright di footer berdasarkan tema karakter aktif
-            let fName = (tTitle && tTitle.toLowerCase().includes("sasuke")) ? "Sasuke Uchiha" : "Galactic Starhawk";
+            // Logo Image
+            const navLogo = document.getElementById('nav-logo-img');
+            if (navLogo) navLogo.src = finalLogo;
+
+            // Hero Image (Priority: Custom Image > Character Background Image)
+            const avatarImg = document.getElementById('profile-avatar');
+            if (avatarImg && heroImg && heroImg.trim() !== "") {
+                avatarImg.src = heroImg;
+            }
+
+            // Footer
             const footerEl = document.getElementById('footer-copyright');
             if (footerEl) {
-                footerEl.innerHTML = `&copy; 2026 Created by ${fName} &middot; All Rights Reserved`;
+                footerEl.innerHTML = `&copy; 2026 Created by ${finalHName} &middot; All Rights Reserved`;
             }
-            
-            // Sync hidden inputs safely (kept for backward compatibility)
-            const deskName = document.getElementById('desktop-website-name');
-            if (deskName) deskName.value = wName;
-            const mobName = document.getElementById('mobile-website-name');
-            if (mobName) mobName.value = wName;
-            
-            const deskTitle = document.getElementById('desktop-theme-title');
-            if (deskTitle) deskTitle.value = tTitle;
-            const mobTitle = document.getElementById('mobile-theme-title');
-            if (mobTitle) mobTitle.value = tTitle;
         };
 
         window.updateIdentity = function(source) {
@@ -2489,6 +2563,7 @@
         // EVENT LISTENERS
         // ============================================================
         function setupEventListeners() {
+            setupProfileLivePreview();
             logoContainer.addEventListener('click', () => {
                 document.body.classList.toggle('light-mode');
                 const mode = document.body.classList.contains('light-mode') ? 'Mode Terang' : 'Mode Gelap';
@@ -2677,6 +2752,63 @@
             location.href = window.location.pathname; 
         };
 
+        // ============================================================
+        // PROFILE IDENTITAS LIVE PREVIEW
+        // ============================================================
+        window.showProfileModal = function() {
+            document.getElementById('profile-modal').style.display = 'flex';
+            document.getElementById('prof-website-name').value = customizationSettings.websiteName || '';
+            document.getElementById('prof-hero-name').value = customizationSettings.heroName || '';
+            document.getElementById('prof-hero-subtitle').value = customizationSettings.heroSubtitle || customizationSettings.themeTitle || '';
+            document.getElementById('prof-logo-url').value = customizationSettings.logoUrl || '';
+            document.getElementById('prof-hero-image').value = customizationSettings.heroImage || '';
+        };
+
+        document.getElementById('profile-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            customizationSettings.websiteName = document.getElementById('prof-website-name').value;
+            customizationSettings.heroName = document.getElementById('prof-hero-name').value;
+            customizationSettings.heroSubtitle = document.getElementById('prof-hero-subtitle').value;
+            customizationSettings.themeTitle = customizationSettings.heroSubtitle; // Sync with legacy
+            customizationSettings.logoUrl = document.getElementById('prof-logo-url').value;
+            customizationSettings.heroImage = document.getElementById('prof-hero-image').value;
+            
+            saveCustomization();
+            applyAllCustomizations(); // Force final apply
+            document.getElementById('profile-modal').style.display = 'none';
+            window.showNotification('Berhasil', 'Identitas profil disimpan secara permanen.', 'success');
+        });
+
+        function setupProfileLivePreview() {
+            document.getElementById('prof-website-name').addEventListener('input', (e) => {
+                document.getElementById('nav-website-name').textContent = e.target.value || "MLBB FANNY";
+            });
+            document.getElementById('prof-hero-name').addEventListener('input', (e) => {
+                const val = e.target.value || "FANNY";
+                const h = document.getElementById('display-website-name');
+                if(h) { h.textContent = val; h.setAttribute('data-text', val); }
+                document.title = `MLBB Portal | ${val}`;
+            });
+            document.getElementById('prof-hero-subtitle').addEventListener('input', (e) => {
+                const val = e.target.value || "GALACTIC STARHAWK";
+                const sub = document.getElementById('display-theme-title');
+                if(sub) { sub.textContent = val; sub.setAttribute('data-text', val); }
+            });
+            document.getElementById('prof-logo-url').addEventListener('input', (e) => {
+                const val = e.target.value || "https://files.catbox.moe/8ulhiv.webp";
+                const l = document.getElementById('nav-logo-img');
+                if (l) l.src = val;
+            });
+            document.getElementById('prof-hero-image').addEventListener('input', (e) => {
+                const val = e.target.value;
+                const i = document.getElementById('profile-avatar');
+                if (i) {
+                    if(val && val.trim() !== "") i.src = val;
+                    else applyBackground(customizationSettings.background); // Revert ke karakter asli
+                }
+            });
+        }
+
         window.revealLink = function() {
             document.getElementById('btn-show-link').style.display = 'none';
             document.getElementById('link-content').style.display = 'block';
@@ -2774,8 +2906,12 @@
                         theme: settings.theme || "galactic", 
                         font: settings.font || "sf-pro",
                         background: settings.background || "sasuke", 
-                        websiteName: settings.websiteName || "PORTAL",
-                        themeTitle: settings.themeTitle || "SMART PORTAL", 
+                        websiteName: settings.websiteName || "MLBB FANNY",
+                        heroName: settings.heroName || "FANNY",
+                        heroSubtitle: settings.heroSubtitle || settings.themeTitle || "GALACTIC STARHAWK", 
+                        logoUrl: settings.logoUrl || "https://files.catbox.moe/8ulhiv.webp",
+                        heroImage: settings.heroImage || "",
+                        themeTitle: settings.themeTitle || "GALACTIC STARHAWK", 
                         visualEffect: settings.visualEffect || "normal",
                         character: settings.character || "sasuke"
                     };
@@ -3141,9 +3277,16 @@
                 bgImg.onerror = () => bgImg.classList.remove('loading');
             }
             if (avatar) {
-                // Gunakan avatar dari char jika ada
+                // PRIORITAS: 1. Foto Customisasi (jika ada), 2. Avatar Karakter, 3. Avatar Background
                 const ch = CHARACTERS.find(c => BACKGROUNDS.find(b => b.id === bgId && b.id === c.background));
-                avatar.src = bgObj.avatar || (ch ? ch.avatar : '');
+                let chosenAvatar = customizationSettings.heroImage || bgObj.avatar || (ch ? ch.avatar : '');
+                
+                // Cegah assignment empty string jika heroImage kosong
+                if (customizationSettings.heroImage && customizationSettings.heroImage.trim() === "") {
+                    chosenAvatar = bgObj.avatar || (ch ? ch.avatar : '');
+                }
+
+                avatar.src = chosenAvatar;
                 
                 avatar.onload = () => {
                     avatar.classList.remove('loading');
