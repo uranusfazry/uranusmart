@@ -2809,6 +2809,22 @@
             });
             window.addEventListener('resize', updateNavDisplay);
 
+            // PATCH JS: Responsive Background Resize Auto-Switch
+            window.addEventListener('resize', () => {
+                const bgImg = document.getElementById('bg-image');
+                if (!bgImg) return;
+                
+                const cPort = customizationSettings.portraitImage && customizationSettings.portraitImage.trim() !== "" ? customizationSettings.portraitImage : null;
+                const cLand = customizationSettings.landscapeImage && customizationSettings.landscapeImage.trim() !== "" ? customizationSettings.landscapeImage : null;
+                
+                const bgObj = BACKGROUNDS.find(b => b.id === customizationSettings.background) || BACKGROUNDS[0];
+                
+                const finalPortrait = cPort || bgObj.imgP;
+                const finalLandscape = cLand || bgObj.imgL;
+                
+                bgImg.src = window.innerWidth <= 768 ? finalPortrait : finalLandscape;
+            });
+
             // PATCH JS: GLOBAL ANTI GHOST IMAGE & DRAG (CAPTURE PHASE)
             // Menggunakan 'true' agar event dicegat sebelum browser memprosesnya
             document.addEventListener("dragstart", e => {
@@ -3743,20 +3759,18 @@
         // Semua asset sudah di-preload sebelum ini dipanggil (via loadCharacter)
         // Jadi set src langsung — browser tidak perlu re-download
         setTimeout(() => {
-            // PATCH START: Responsive Background (Portrait Mobile & Landscape Desktop)
+            // PATCH START: Strict Responsive Background (Portrait Mobile & Landscape Desktop)
             const cPort = customizationSettings.portraitImage && customizationSettings.portraitImage.trim() !== "" ? customizationSettings.portraitImage : null;
             const cLand = customizationSettings.landscapeImage && customizationSettings.landscapeImage.trim() !== "" ? customizationSettings.landscapeImage : null;
 
-            // Fallback Engine (Saling melengkapi jika salah satu kosong)
-            const finalPortrait = cPort || cLand || bgObj.imgP;
-            const finalLandscape = cLand || cPort || bgObj.imgL;
+            const finalPortrait = cPort || bgObj.imgP;
+            const finalLandscape = cLand || bgObj.imgL;
             const finalBg = window.innerWidth <= 768 ? finalPortrait : finalLandscape;
             
-            console.log("Portrait BG (Mobile):", finalPortrait);
-            console.log("Landscape BG (Desktop):", finalLandscape);
+            console.log("Strict Portrait (Mobile):", finalPortrait);
+            console.log("Strict Landscape (Desktop):", finalLandscape);
             console.groupEnd(); // End Debug
 
-            // WAJIB timpa srcset & media query agar browser merender sesuai ukuran device
             if (portrait) {
                 portrait.media = "(max-width: 768px)";
                 portrait.srcset = finalPortrait;
