@@ -2312,34 +2312,60 @@
         // INIT APPLICATION
         // ============================================================
         function initPortalApp() {
-            loadCustomization();
             const urlParams = new URLSearchParams(window.location.search);
             const encodedData = urlParams.get('p');
             
             if (encodedData) {
                 const decoded = UrlManager.load(encodedData);
                 if (decoded && decoded.portals) {
-                    portals = decoded.portals;
-                    customizationSettings.theme = decoded.theme || "galactic";
-                    customizationSettings.font = decoded.font || "sf-pro";
-                    customizationSettings.background = decoded.background || "sasuke";
-                    customizationSettings.websiteName = decoded.websiteName || "MLBB SUYOU";
-                    customizationSettings.themeTitle = decoded.themeTitle || "Sasuke Uchiha";
-                    customizationSettings.visualEffect = decoded.visualEffect || "silver-executive";
-                    customizationSettings.character = decoded.character || "sasuke";
+                    // DEBUG LOG: Cek Data Smart Link
+                    console.group("SMART LINK CONFIG");
+                    console.log("Theme:", decoded.theme);
+                    console.log("Background:", decoded.background);
+                    console.log("Website Name:", decoded.websiteName);
+                    console.log("Font:", decoded.font);
+                    console.log("Effect:", decoded.visualEffect);
+                    console.groupEnd();
 
+                    // VALIDASI THEME & FALLBACK
+                    const themeExists = THEMES.some(t => t.id === decoded.theme);
+                    if (!themeExists && decoded.theme) {
+                        console.warn("Theme Warning: Tema tidak ditemukan, menggunakan default");
+                        decoded.theme = "galactic";
+                        setTimeout(() => window.showNotification("Theme Warning", "Tema tidak ditemukan, menggunakan default", "warning"), 1000);
+                    }
+
+                    // PRIORITAS 1: Gunakan Data dari URL (Abaikan LocalStorage Total)
+                    portals = decoded.portals;
+                    customizationSettings = {
+                        theme: decoded.theme || "galactic",
+                        font: decoded.font || "sf-pro",
+                        background: decoded.background || "sasuke",
+                        websiteName: decoded.websiteName || "MLBB SUYOU",
+                        themeTitle: decoded.themeTitle || "Sasuke Uchiha",
+                        visualEffect: decoded.visualEffect || "silver-executive",
+                        character: decoded.character || "sasuke",
+                        characterProfiles: {} // Reset profiles untuk memori baru
+                    };
+
+                    // Simpan state baru ke Local Storage agar tersimpan jika di-refresh
                     localStorage.setItem('portals', JSON.stringify(portals));
                     saveCustomization();
                     window.history.replaceState({}, document.title, window.location.pathname);
                     
+                    // PRIORITAS 2-6: Terapkan Tema & Kustomisasi Terlebih Dahulu
                     applyAllCustomizations();
+                    
+                    // PRIORITAS 7-8: Render UI & Portal Setelah Kustomisasi Selesai
                     renderPortals();
-                    window.showNotification('Berhasil','Data dan Tema dimuat dari tautan','success');
+                    setTimeout(() => window.showNotification('Berhasil', 'Data dan Tema dimuat dari tautan', 'success'), 500);
                 } else {
+                    loadCustomization();
                     loadFromStorage();
                     applyAllCustomizations();
                 }
             } else {
+                loadCustomization();
                 loadFromStorage();
                 applyAllCustomizations();
             }
@@ -2740,18 +2766,18 @@
                 try {
                     if (typeof QRious === "undefined") throw new Error("QRious library tidak termuat");
 
-                    const settings = window.customizationSettings || {
-                        theme: "galactic", font: "sf-pro", background: "sasuke",
-                        websiteName: "PORTAL", themeTitle: "SMART PORTAL",
-                        visualEffect: "normal", character: "sasuke"
-                    };
+                    // PERBAIKAN BUG: Gunakan current state secara langsung, bukan window.customizationSettings
+                    const settings = customizationSettings;
 
                     const dataToEncode = { 
                         portals: optimizedPortals, 
-                        theme: settings.theme, font: settings.font,
-                        background: settings.background, websiteName: settings.websiteName,
-                        themeTitle: settings.themeTitle, visualEffect: settings.visualEffect,
-                        character: settings.character
+                        theme: settings.theme || "galactic", 
+                        font: settings.font || "sf-pro",
+                        background: settings.background || "sasuke", 
+                        websiteName: settings.websiteName || "PORTAL",
+                        themeTitle: settings.themeTitle || "SMART PORTAL", 
+                        visualEffect: settings.visualEffect || "normal",
+                        character: settings.character || "sasuke"
                     };
 
                     const encoded = UrlManager.encode(dataToEncode);
